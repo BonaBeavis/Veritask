@@ -1,14 +1,17 @@
 package controllers
 
-import play.modules.reactivemongo.MongoController
-import play.modules.reactivemongo.json.collection.JSONCollection
-import scala.concurrent.Future
-import reactivemongo.api.Cursor
+import javax.inject.{Inject, Singleton}
+
+import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import org.slf4j.{LoggerFactory, Logger}
-import javax.inject.Singleton
-import play.api.mvc._
 import play.api.libs.json._
+import play.api.mvc._
+import play.modules.reactivemongo._
+import play.modules.reactivemongo.json._
+import play.modules.reactivemongo.json.collection._
+import reactivemongo.api.Cursor
+
+import scala.concurrent.Future
 
 /**
  * The Users controllers encapsulates the Rest endpoints and the interaction with the MongoDB, via ReactiveMongo
@@ -16,25 +19,10 @@ import play.api.libs.json._
  * @see https://github.com/ReactiveMongo/Play-ReactiveMongo
  */
 @Singleton
-class Users extends Controller with MongoController {
+class Users @Inject()(val reactiveMongoApi: ReactiveMongoApi)
+  extends Controller with MongoController with ReactiveMongoComponents {
 
   private final val logger: Logger = LoggerFactory.getLogger(classOf[Users])
-
-  /*
-   * Get a JSONCollection (a Collection implementation that is designed to work
-   * with JsObject, Reads and Writes.)
-   * Note that the `collection` is not a `val`, but a `def`. We do _not_ store
-   * the collection reference to avoid potential problems in development with
-   * Play hot-reloading.
-   */
-  def collection: JSONCollection = db.collection[JSONCollection]("users")
-
-  // ------------------------------------------ //
-  // Using case classes + Json Writes and Reads //
-  // ------------------------------------------ //
-
-  import models._
-  // import models.JsonFormats._
 
   def createUser = Action.async(parse.json) {
     request =>
@@ -55,6 +43,23 @@ class Users extends Controller with MongoController {
           }
       }.getOrElse(Future.successful(BadRequest("invalid json")))
   }
+
+  // ------------------------------------------ //
+  // Using case classes + Json Writes and Reads //
+  // ------------------------------------------ //
+
+  import models._
+
+  // import models.JsonFormats._
+
+  /*
+   * Get a JSONCollection (a Collection implementation that is designed to work
+   * with JsObject, Reads and Writes.)
+   * Note that the `collection` is not a `val`, but a `def`. We do _not_ store
+   * the collection reference to avoid potential problems in development with
+   * Play hot-reloading.
+   */
+  def collection: JSONCollection = db.collection[JSONCollection]("users")
 
   def updateUser(firstName: String, lastName: String) = Action.async(parse.json) {
     request =>
@@ -90,7 +95,7 @@ class Users extends Controller with MongoController {
     // everything's ok! Let's reply with the array
     futurePersonsJsonArray.map {
       users =>
-        Ok(users(0))
+        Ok(users(0).get)
     }
   }
 
