@@ -24,12 +24,17 @@ angular.module('myApp.routeConfig', ['ngRoute'])
             .when('/users/edit/:firstName/:lastName', {
                 templateUrl: '/assets/partials/update.html'
             })
-            .otherwise({redirectTo: '/'})])
+            .when('/tasksets', {
+                templateUrl: '/assets/partials/tasksets.html'
+            })
+            .otherwise({redirectTo: '/'})
+    ])
     .config(['$locationProvider', ($locationProvider) ->
         $locationProvider.html5Mode({
             enabled: true,
             requireBase: false
-        })])
+        })
+    ])
 
 @commonModule = angular.module('myApp.common', [])
 @controllersModule = angular.module('myApp.controllers', [])
