@@ -34,7 +34,7 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies += specs2 % Test
-
+libraryDependencies += "org.w3" %% "banana-jena" % "0.8.1"
 
 //updateOptions := updateOptions.value.withCachedResolution(true)
 

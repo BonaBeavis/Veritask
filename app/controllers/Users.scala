@@ -2,6 +2,7 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
+import models.User
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
@@ -52,15 +53,6 @@ class Users @Inject()(val reactiveMongoApi: ReactiveMongoApi)
 
   // import models.JsonFormats._
 
-  /*
-   * Get a JSONCollection (a Collection implementation that is designed to work
-   * with JsObject, Reads and Writes.)
-   * Note that the `collection` is not a `val`, but a `def`. We do _not_ store
-   * the collection reference to avoid potential problems in development with
-   * Play hot-reloading.
-   */
-  def collection: JSONCollection = db.collection[JSONCollection]("users")
-
   def updateUser(firstName: String, lastName: String) = Action.async(parse.json) {
     request =>
       request.body.validate[User].map {
@@ -98,5 +90,14 @@ class Users @Inject()(val reactiveMongoApi: ReactiveMongoApi)
         Ok(users(0).get)
     }
   }
+
+  /*
+   * Get a JSONCollection (a Collection implementation that is designed to work
+   * with JsObject, Reads and Writes.)
+   * Note that the `collection` is not a `val`, but a `def`. We do _not_ store
+   * the collection reference to avoid potential problems in development with
+   * Play hot-reloading.
+   */
+  def collection: JSONCollection = db.collection[JSONCollection]("users")
 
 }
