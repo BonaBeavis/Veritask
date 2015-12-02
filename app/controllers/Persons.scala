@@ -19,7 +19,6 @@ import scala.concurrent.Future
 @Singleton
 class Persons @Inject()(val reactiveMongoApi: ReactiveMongoApi)
   extends Controller with MongoController with ReactiveMongoComponents {
-
   private final val logger: Logger = LoggerFactory.getLogger(classOf[Persons])
 
   def createPerson = Action.async(parse.json) {
@@ -37,10 +36,11 @@ class Persons @Inject()(val reactiveMongoApi: ReactiveMongoApi)
           collection.insert(person).map {
             lastError =>
               logger.debug(s"Successfully inserted with LastError: $lastError")
-              Created(s"User Created")
+              Created(s"Person Created")
           }
       }.getOrElse(Future.successful(BadRequest("invalid json")))
   }
 
   def collection: JSONCollection = db.collection[JSONCollection]("persons")
+
 }

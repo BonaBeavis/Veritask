@@ -20,6 +20,7 @@ UglifyKeys.uglifyOps := { js =>
   Seq((js.sortBy(_._2), "concat.min.js"))
 }
 
+resolvers += "bblfish-snapshots" at "http://bblfish.net/work/repo/snapshots/"
 resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
 resolvers += "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 
@@ -34,7 +35,7 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies += specs2 % Test
-libraryDependencies += "org.w3" %% "banana-jena" % "0.8.1"
+libraryDependencies += "org.w3" %% "banana-jena" % "0.8.2-SNAPSHOT" //"0.8.1"
 
 //updateOptions := updateOptions.value.withCachedResolution(true)
 

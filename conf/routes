@@ -12,7 +12,7 @@ GET         /randomUUID                       @controllers.Application.randomUUI
 GET         /users                            @controllers.Users.findUsers
 POST        /user                             @controllers.Users.createUser
 PUT         /user/:firstName/:lastName        @controllers.Users.updateUser(firstName: String, lastName: String)
-POST        /persons                          @controllers.Persons.createPerson
+POST        /person                           @controllers.Persons.createPerson
 
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file                     controllers.Assets.versioned(path="/public", file: Asset)

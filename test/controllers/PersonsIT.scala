@@ -24,10 +24,7 @@ class PersonsIT extends Specification {
     "insert a valid json" in {
       running(FakeApplication()) {
         val request = FakeRequest.apply(POST, "/person").withJsonBody(Json.obj(
-          "firstName" -> "Jack",
-          "lastName" -> "London",
-          "age" -> 27,
-          "active" -> true))
+          "name" -> "Jack"))
         val response = route(request)
         response.isDefined mustEqual true
         val result = Await.result(response.get, timeout)
