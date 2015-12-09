@@ -5,14 +5,29 @@
 # ~~~~
 
 # Single endpoint for serving AngularJS
-GET         /                                 @controllers.Application.index
-GET         /randomUUID                       @controllers.Application.randomUUID
+GET           /                                 @controllers.Application.index
+GET           /randomUUID                       @controllers.Application.randomUUID
 
 # User management API
-GET         /users                            @controllers.Users.findUsers
-POST        /user                             @controllers.Users.createUser
-PUT         /user/:firstName/:lastName        @controllers.Users.updateUser(firstName: String, lastName: String)
-POST        /person                           @controllers.Persons.createPerson
+GET           /users                            @controllers.Users.findUsers
+POST          /user                             @controllers.Users.createUser
+PUT           /user/:firstName/:lastName        @controllers.Users.updateUser(firstName: String, lastName: String)
+POST          /person                           @controllers.Persons.createPerson
+# POST        /tasksets                         @controllers.Tasksets.createTaskset
 
+GET           /tasksets/:id                     @controllers.Tasksets.one(id: String)
+GET           /tasksets                         @controllers.Tasksets.selection
+POST          /tasksets                         @controllers.Tasksets.create
+PUT           /tasksets/:id                     @controllers.Tasksets.update(id: String)
+DELETE        /tasksets/:id                     @controllers.Tasksets.delete(id: String)
 # Map static resources from the /public folder to the /assets URL path
-GET         /assets/*file                     controllers.Assets.versioned(path="/public", file: Asset)
+GET           /assets/*file                     controllers.Assets.versioned(path="/public", file: Asset)
+
+
+
+
+# GET           /                                 controllers.Assets.at(path="/public", file="index.html")
+
+# GET        /assets/*file                 controllers.Assets.at(path="/public", file)
+
+# GET		   /importdb					 controllers.ImportController.importDatabase

@@ -35,7 +35,7 @@ class Users @Inject()(val reactiveMongoApi: ReactiveMongoApi)
      * turned into a JsObject using a Writes.)
      */
       request.body.validate[User].map {
-        user =>
+        user: User =>
         // `user` is an instance of the case class `models.User`
           collection.insert(user).map {
             lastError =>
@@ -67,6 +67,15 @@ class Users @Inject()(val reactiveMongoApi: ReactiveMongoApi)
       }.getOrElse(Future.successful(BadRequest("invalid json")))
   }
 
+  /*
+   * Get a JSONCollection (a Collection implementation that is designed to work
+   * with JsObject, Reads and Writes.)
+   * Note that the `collection` is not a `val`, but a `def`. We do _not_ store
+   * the collection reference to avoid potential problems in development with
+   * Play hot-reloading.
+   */
+  def collection: JSONCollection = db.collection[JSONCollection]("users")
+
   def findUsers = Action.async {
     // let's do our query
     val cursor: Cursor[User] = collection.
@@ -90,14 +99,5 @@ class Users @Inject()(val reactiveMongoApi: ReactiveMongoApi)
         Ok(users(0).get)
     }
   }
-
-  /*
-   * Get a JSONCollection (a Collection implementation that is designed to work
-   * with JsObject, Reads and Writes.)
-   * Note that the `collection` is not a `val`, but a `def`. We do _not_ store
-   * the collection reference to avoid potential problems in development with
-   * Play hot-reloading.
-   */
-  def collection: JSONCollection = db.collection[JSONCollection]("users")
 
 }
