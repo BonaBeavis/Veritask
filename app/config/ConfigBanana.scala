@@ -17,7 +17,8 @@ trait ConfigBanana {
   implicit val recordBinder: RecordBinder[Rdf] = Sesame.recordBinder
   implicit val sesameRDFWriterHelper = new SesameRDFWriterHelper
   implicit val jsonldReader: SesameJSONLDReader = new SesameJSONLDReader
-  implicit val jsonldWriter: RDFWriter[Rdf, Try, JsonLdFlattened] = sesameRDFWriterHelper.jsonldFlattenedWriter
+  implicit val jsonldWriter: RDFWriter[Rdf, Try, JsonLdFlattened] =
+    sesameRDFWriterHelper.jsonldFlattenedWriter
   val foaf = FOAFPrefix[Rdf]
   val cert = CertPrefix[Rdf]
   val vt = VTPrefix[Rdf]
@@ -33,6 +34,8 @@ class VTPrefix[Rdf <: RDF](implicit ops: RDFOps[Rdf])
   extends PrefixBuilder("vt", "http://aksw/veritask#")(ops) {
   val inTaskset = apply("inTaskset")
   val Tasks = apply("Tasks")
+  val Verifier = apply("Verifier")
+  val Result = apply("Result")
 }
 
 object VoIDPrefix {

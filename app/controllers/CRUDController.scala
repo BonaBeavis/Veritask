@@ -27,6 +27,11 @@ class CRUDController[E: Format, ID](service: CRUDService[E, ID])(redirectUrl: ID
     )
   }
 
+  def all = Action.async {
+    service.findByCriteria(Map(), 50).map(entity => Ok(Json.toJson(entity))
+    )
+  }
+
   def selection = Action.async { implicit request =>
     (parseJsonParam("query"), parseJsonParam("sort")) match {
       case ((_, Success(query)), (_, Success(sort))) => service

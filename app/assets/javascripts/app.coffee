@@ -24,6 +24,9 @@ angular.module('myApp.routeConfig', ['ngRoute'])
             .when('/users/edit/:firstName/:lastName', {
                 templateUrl: '/assets/partials/update.html'
             })
+        .when('/tasksets/create', {
+            templateUrl: '/assets/partials/createTaskset.html'
+        })
             .when('/tasksets', {
                 templateUrl: '/assets/partials/tasksets.html'
             })

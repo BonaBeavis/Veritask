@@ -16,7 +16,7 @@ POST          /person                           @controllers.Persons.createPerso
 # POST        /tasksets                         @controllers.Tasksets.createTaskset
 
 GET           /tasksets/:id                     @controllers.Tasksets.one(id: String)
-GET           /tasksets                         @controllers.Tasksets.selection
+GET           /tasksets                         @controllers.Tasksets.all
 POST          /tasksets                         @controllers.Tasksets.create
 PUT           /tasksets/:id                     @controllers.Tasksets.update(id: String)
 DELETE        /tasksets/:id                     @controllers.Tasksets.delete(id: String)

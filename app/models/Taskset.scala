@@ -8,32 +8,32 @@ import recordBinder._
 /**
   * Created by beavis on 02.12.15.
   */
-case class Taskset(uuid: Option[String], tasks: Set[Task] = Set.empty) {
+case class Taskset(_id: Option[String], tasks: Set[Task] = Set.empty) {
 }
 
 object Taskset {
   val clazz = URI("http://example.com/Taskset#class")
   implicit val classUris = classUrisFor[Taskset](clazz)
 
-  val uuid = property[Option[String]](vt("id"))
+  val _id = property[Option[String]](vt("_id"))
   val tasks = set[Task](vt.Tasks)
 
   //ToDo: Find out for what container is
   implicit val container = URI("http://example.com/tasksets")
   implicit val binder: PGBinder[Rdf, Taskset] =
-    pgbWithId[Taskset](t => URI("http://example.com/tasksets" + t.uuid))
-      .apply(uuid, tasks)(Taskset.apply, Taskset.unapply) withClasses classUris
+    pgbWithId[Taskset](t => URI("http://example.com/tasksets" + t._id))
+      .apply(_id, tasks)(Taskset.apply, Taskset.unapply) withClasses classUris
 
   implicit val userFormat = Json.format[Taskset]
 
   implicit object VesselIdentity extends Identity[Taskset, String] {
-    val name = "uuid"
+    val name = "_id"
 
-    def of(entity: Taskset): Option[String] = entity.uuid
+    def of(entity: Taskset): Option[String] = entity._id
 
-    def set(entity: Taskset, id: String): Taskset = entity.copy(uuid = Option(id))
+    def set(entity: Taskset, id: String): Taskset = entity.copy(_id = Option(id))
 
-    def clear(entity: Taskset): Taskset = entity.copy(uuid = None)
+    def clear(entity: Taskset): Taskset = entity.copy(_id = None)
 
     def next: String = "Placeholder"
   }
