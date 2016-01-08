@@ -1,5 +1,6 @@
 package models
 
+import config.ConfigBanana
 import play.api.libs.json.Json
 
 /**
@@ -8,7 +9,7 @@ import play.api.libs.json.Json
 case class Person(name: String, nickname: Option[String] = None) {
 }
 
-object Person {
+object Person extends ConfigBanana {
   import ops._
   import recordBinder._
 
@@ -20,6 +21,6 @@ object Person {
 
   implicit val container = URI("http://example.com/persons/")
   implicit val binder = pgb[Person](name, nickname)(Person.apply, Person.unapply)
-  implicit val userFormat = Json.format[Person]
+  implicit val personFormat = Json.format[Person]
 }
 

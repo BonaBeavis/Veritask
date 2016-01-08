@@ -1,8 +1,7 @@
 package models
 
-import ops._
+import config.ConfigBanana
 import play.api.libs.json.Json
-import recordBinder._
 
 /**
   * Created by beavis on 03.12.15.
@@ -10,8 +9,10 @@ import recordBinder._
 case class Verification(verifier: Person, result: Boolean) {
 }
 
-object Verification {
+object Verification extends ConfigBanana {
 
+  import ops._
+  import recordBinder._
   val clazz = URI("http://example.com/Verification#class")
   implicit val classUris = classUrisFor[Verification](clazz)
 

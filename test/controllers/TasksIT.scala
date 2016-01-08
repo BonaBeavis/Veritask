@@ -15,7 +15,7 @@ import scala.concurrent.duration._
   * You can mock out a whole application including requests, plugins etc.
   * For more information, consult the wiki.
   */
-class TasksetsIT extends Specification {
+class TasksIT extends Specification {
 
   val timeout: FiniteDuration = FiniteDuration(5, TimeUnit.SECONDS)
 
@@ -38,11 +38,12 @@ class TasksetsIT extends Specification {
     }
     """)
 
-  "Taskset API" should {
+  "Tasks API" should {
 
-    "Create a Taskset from Json" in {
+    "Create a Tasks from a JSON-LD body" in {
       running(FakeApplication()) {
-        val request = FakeRequest.apply(POST, "/tasksets").withJsonBody(tasksetJson)
+        val request =
+          FakeRequest.apply(POST, "/tasksets").withJsonBody(tasksetJson)
         val response = route(request)
         response.isDefined mustEqual true
         val result = Await.result(response.get, timeout)

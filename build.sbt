@@ -37,6 +37,6 @@ libraryDependencies ++= Seq(
 libraryDependencies += specs2 % Test
 libraryDependencies += "org.w3" %% "banana-sesame" % "0.8.2-SNAPSHOT" //"0.8.1"
 
-updateOptions := updateOptions.value.withCachedResolution(true)
+//updateOptions := updateOptions.value.withCachedResolution(true)
 
 //fork in run := true

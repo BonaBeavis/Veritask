@@ -1,24 +1,18 @@
 package config
 
 import org.w3.banana._
-import org.w3.banana.binder.RecordBinder
-import org.w3.banana.io._
 import org.w3.banana.sesame._
-import org.w3.banana.sesame.io._
-
-import scala.util.Try
 
 /**
   * Created by beavis on 02.12.15.
   */
-trait ConfigBanana {
-  type Rdf = Sesame
-  implicit val ops: RDFOps[Rdf] = Sesame.ops
-  implicit val recordBinder: RecordBinder[Rdf] = Sesame.recordBinder
-  implicit val sesameRDFWriterHelper = new SesameRDFWriterHelper
-  implicit val jsonldReader: SesameJSONLDReader = new SesameJSONLDReader
-  implicit val jsonldWriter: RDFWriter[Rdf, Try, JsonLdFlattened] =
-    sesameRDFWriterHelper.jsonldFlattenedWriter
+trait ConfigBanana
+  extends RDFModule
+  with RDFOpsModule
+  with RecordBinderModule
+  with JsonLDReaderModule
+  with SesameModule {
+
   val foaf = FOAFPrefix[Rdf]
   val cert = CertPrefix[Rdf]
   val vt = VTPrefix[Rdf]
