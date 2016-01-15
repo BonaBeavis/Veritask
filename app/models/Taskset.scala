@@ -1,39 +1,31 @@
 package models
 
-import config.ConfigBanana
-import org.w3.banana.binder.PGBinder
+import java.util.UUID
+
 import play.api.libs.json.Json
 
-/**
-  * Created by beavis on 02.12.15.
-  */
-case class Taskset(_id: Option[String], tasks: Set[Task] = Set.empty) {
-}
+case class Taskset(
+                      uuid: Option[UUID],
+                      subjectsTarget: Option[String],
+                      linkPredicate: Option[String],
+                      objectsTarget: Option[String],
+                      subjectEndpoint: Option[String],
+                      objectEndpoint: Option[String]
+                  )
 
-object Taskset extends ConfigBanana {
-
-  import ops._
-  import recordBinder._
-  val clazz = URI("http://example.com/Taskset#class")
-  implicit val classUris = classUrisFor[Taskset](clazz)
-
-  val _id = property[Option[String]](vt("_id"))
-  val tasks = set[Task](vt.Tasks)
-
-  //ToDo: Find out for what container is
-  implicit val container = URI("http://example.com/tasksets")
-  implicit val binder: PGBinder[Rdf, Taskset] =
-    pgbWithId[Taskset](t => URI("http://example.com/tasksets" + t._id))
-      .apply(_id, tasks)(Taskset.apply, Taskset.unapply) withClasses classUris
+object Taskset {
 
   implicit val userFormat = Json.format[Taskset]
 
-  implicit object VesselIdentity extends Identity[Taskset, String] {
-    val name = "_id"
-    def of(entity: Taskset): Option[String] = entity._id
-    def set(entity: Taskset, id: String): Taskset = entity.copy(_id = Option(id))
-    def clear(entity: Taskset): Taskset = entity.copy(_id = None)
-    def next: String = "Placeholder"
+  implicit object TasksetIdentity extends Identity[Taskset, UUID] {
+
+    val name = "uuid"
+
+    def of(entity: Taskset): Option[UUID] = entity.uuid
+
+    def set(entity: Taskset, id: UUID): Taskset = entity.copy(uuid = Option(id))
+
+    def generateID(entity: Taskset): UUID = UUID.randomUUID()
   }
 
 }

@@ -1,15 +1,9 @@
 package models
 
-import java.util.UUID
-
 import config.ConfigBanana
 import play.api.libs.json.Json
 
-/**
-  * Created by beavis on 03.12.15.
-  */
-case class Task(_id: Option[String], s: String, p: String, o: String) {
-}
+case class Task(_id: Option[String], s: String, p: String, o: String)
 
 object Task extends ConfigBanana {
 
@@ -23,23 +17,25 @@ object Task extends ConfigBanana {
   val p = property[String](rdf.predicate)
   val o = property[String](rdf.obj)
   implicit val container = URI("http://example.com/persons/")
-  implicit val binder = pgb[Task](_id, s, p, o)(Task.apply, Task.unapply)
+  implicit val binder = pgbWithId[Task](t => container.withFragment(t._id.get.toString))
+      .apply(_id, s, p, o)(Task.apply, Task.unapply)
   implicit val userFormat = Json.format[Task]
 
   def create(triple: Rdf#Triple): Task = {
     val (s, p, o) = fromTriple(triple)
-    Task(Option("String"), s.toString, p.toString, o.toString)
+    val task = Task(None, s.toString, p.toString, o.toString)
+    TaskIdentity.set(task, TaskIdentity.generateID(task))
   }
 
   implicit object TaskIdentity extends Identity[Task, String] {
     val name = "_id"
 
-    def of(entity: Task): Option[String] = entity._id
+    def of(task: Task): Option[String] = task._id
 
-    def set(entity: Task, id: String): Task = entity.copy(_id = Option(id))
+    def set(task: Task, id: String): Task = task.copy(_id = Option(id))
 
-    def clear(entity: Task): Task = entity.copy(_id = None)
-
-    def next: String = UUID.randomUUID().toString
-  } 
+    def generateID(task: Task): String = {
+      play.api.libs.Codecs.sha1(task.s + task.p + task.o)
+    }
+  }
 }

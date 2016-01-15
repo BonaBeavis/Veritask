@@ -18,15 +18,12 @@ class Tasks @Inject()(taskService: TaskService)
 
   def createBulk = Action.async(parse.text) { request =>
     import ops._
-    Future {
-      val graph = jsonldReader.read(new StringReader(request.body), "arg")
-      graph match {
-        case Success(v) => v.triples map (triple => taskService.create(Task.create(triple)))
-        case Failure(e) => Future.successful()
+    jsonldReader.read(new StringReader(request.body), "") match {
+      case Success(v) => taskService.bulkCreate(v.triples.toStream.map(i => Task.create(i))) map {
+        case Right(success) => Ok
+        case Left(err) => BadRequest(err)
       }
-    }.flatMap {
-      case Success(v) => Future.successful(BadRequest)
-      case Failure(e) => Future.successful(BadRequest)
+      case Failure(e) => Future.successful(BadRequest(e.getMessage))
     }
   }
 }

@@ -40,6 +40,17 @@ class TasksIT extends Specification {
 
   "Tasks API" should {
 
+    "Create Tasks from a JSON-LD body" in {
+      running(FakeApplication()) {
+        val request =
+          FakeRequest.apply(PUT, "/tasks").withTextBody(tasksetJson)
+        val response = route(request)
+        response.isDefined mustEqual true
+        val result = Await.result(response.get, timeout)
+        result.header.status must equalTo(CREATED)
+      }
+    }
+
     "Create a Tasks from a JSON-LD body" in {
       running(FakeApplication()) {
         val request =

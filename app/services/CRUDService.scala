@@ -1,5 +1,7 @@
 package services
 
+import reactivemongo.api.commands.WriteResult
+
 import scala.concurrent.Future
 
 /**
@@ -15,6 +17,8 @@ trait CRUDService[E, ID] {
 
   def create(entity: E): Future[Either[String, ID]]
 
+  def bulkCreate(entities: Stream[E]): Future[Either[String, Boolean]]
+
   def update(id: ID, entity: E): Future[Either[String, ID]]
 
   def delete(id: ID): Future[Either[String, ID]]
@@ -28,7 +32,7 @@ import reactivemongo.api._
   * Abstract {{CRUDService}} impl backed by JSONCollection
   */
 abstract class MongoCRUDService[E: Format, ID: Format](implicit identity: Identity[E, ID])
-  extends CRUDService[E, ID] {
+    extends CRUDService[E, ID] {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
   import play.modules.reactivemongo.json._
@@ -37,51 +41,51 @@ abstract class MongoCRUDService[E: Format, ID: Format](implicit identity: Identi
   /** Mongo collection deserializable to [E] */
   def collection: JSONCollection
 
+  def idField: String = "_id"
+
   override def findById(id: ID): Future[Option[E]] = collection.
-    find(Json.obj(identity.name -> id)).
-    one[E]
+      find(Json.obj(identity.name -> id)).
+      one[E]
 
   override def findByCriteria(criteria: Map[String, Any], limit: Int): Future[Traversable[E]] =
     findByCriteria(CriteriaJSONWriter.writes(criteria), limit)
 
   private def findByCriteria(criteria: JsObject, limit: Int): Future[Traversable[E]] =
     collection.
-      find(criteria).
-      cursor[E](readPreference = ReadPreference.primary).
-      collect[List](limit)
+        find(criteria).
+        cursor[E](readPreference = ReadPreference.primary).
+        collect[List](limit)
 
   override def create(entity: E): Future[Either[String, ID]] = {
-    findByCriteria(Json.toJson(identity.clear(entity)).as[JsObject], 1).flatMap {
-      case t if t.size > 0 =>
-        Future.successful(Right(identity.of(t.head).get)) // let's be idempotent
-      case _ => {
-        val id = identity.next
-        val doc = Json.toJson(identity.set(entity, id)).as[JsObject]
-        collection.
-          insert(doc).
-          map {
-            case le if le.ok == true => Right(id)
-            case le => Left(le.message)
-          }
-      }
+    val doc = Json.toJson(entity).as[JsObject]
+    collection.insert(doc) map {
+      case success: WriteResult if success.ok => Right(identity.of(entity).get)
+      case failure: WriteResult => Left(failure.message)
+    }
+  }
+
+  override def bulkCreate(entities: Stream[E]): Future[Either[String, Boolean]] = {
+    val documents = entities.map(entity => Json.toJson(entity).as[JsObject])
+    collection.bulkInsert(documents, false) map {
+      case success: WriteResult if success.ok => Right(true)
+      case failure: WriteResult => Left(failure.errmsg.getOrElse("<none>"))
     }
   }
 
   override def update(id: ID, entity: E): Future[Either[String, ID]] = {
-    val doc = Json.toJson(identity.set(entity, id)).as[JsObject]
+    val doc = Json.toJson(entity).as[JsObject]
     collection.update(Json.obj(identity.name -> id), doc) map {
-      case le if le.ok == true => Right(id)
-      case le => Left(le.message)
+      case success: WriteResult if success.ok => Right(id)
+      case failure: WriteResult => Left(failure.message)
     }
   }
 
   override def delete(id: ID): Future[Either[String, ID]] = {
     collection.remove(Json.obj(identity.name -> id)) map {
-      case le if le.ok == true => Right(id)
-      case le => Left(le.message)
+      case success: WriteResult if success.ok => Right(id)
+      case failure: WriteResult => Left(failure.message)
     }
   }
-
 }
 
 object CriteriaJSONWriter extends Writes[Map[String, Any]] {

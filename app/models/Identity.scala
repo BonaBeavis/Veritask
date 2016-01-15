@@ -3,16 +3,14 @@ package models
 /**
   * Type class providing identity manipulation methods
   */
-trait Identity[E, ID] {
+trait Identity[E, Id] {
 
   def name: String
 
-  def of(entity: E): Option[ID]
+  def of(entity: E): Option[Id]
 
-  def set(entity: E, id: ID): E
+  def set(entity: E, id: Id): E
 
-  def clear(entity: E): E
-
-  def next: ID
+  def generateID(entity: E): Id
 }
 

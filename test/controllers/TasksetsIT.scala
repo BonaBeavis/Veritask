@@ -22,7 +22,7 @@ class TasksetsIT extends Specification {
   val tasksetJson: JsValue = Json.parse(
     """
     {
-        "uuid": "testuuid",
+        "_id": "testuuid",
         "tasks": [
             {
                 "s": "task1s",
@@ -40,7 +40,7 @@ class TasksetsIT extends Specification {
 
   "Taskset API" should {
 
-    "Create a Taskset from Json" in {
+    "Add a Taskset from Json" in {
       running(FakeApplication()) {
         val request =
           FakeRequest.apply(POST, "/tasksets").withJsonBody(tasksetJson)
