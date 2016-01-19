@@ -16,7 +16,7 @@ angular.module('myApp.routeConfig', ['ngRoute'])
     .config(['$routeProvider', ($routeProvider) ->
         $routeProvider
             .when('/', {
-                templateUrl: '/assets/partials/view.html'
+                templateUrl: '/assets/partials/viewTasksets.html'
             })
             .when('/users/create', {
                 templateUrl: '/assets/partials/create.html'
