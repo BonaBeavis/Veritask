@@ -1,8 +1,14 @@
 class CreateTasksetCtrl
 
-  constructor: (@$log, @$location, @TasksetService) ->
+  constructor: (@$log, @$location, @$scope, @Upload, @$timeout, @TasksetService) ->
     @$log.debug "constructing CreateTasksetController"
-    @taskset = {}
+
+  uploadLinkset: (file) ->
+    file.upload = @Upload.upload(
+      url: 'https://angular-file-upload-cors-srv.appspot.com/upload'
+      data:
+        file: file
+        tasksetName: $scope.tasksetName)
 
   createTaskset: () ->
     @$log.debug "createTaskset()"
@@ -18,5 +24,5 @@ class CreateTasksetCtrl
         @$log.error "Unable to create Taskset: #{error}"
     )
 
-controllersModule.controller('CreateTasksetCtrl', ['$log', '$location',
+controllersModule.controller('CreateTasksetCtrl', ['$log', '$location', '$scope', 'Upload', '$timeout'
   'TasksetService', CreateTasksetCtrl])

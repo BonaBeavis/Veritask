@@ -2,6 +2,7 @@
 dependencies = [
     'ngRoute',
     'ui.bootstrap',
+    'ngFileUpload',
     'myApp.filters',
     'myApp.services',
     'myApp.controllers',
@@ -18,15 +19,12 @@ angular.module('myApp.routeConfig', ['ngRoute'])
             .when('/', {
                 templateUrl: '/assets/partials/viewTasksets.html'
             })
-            .when('/users/create', {
-                templateUrl: '/assets/partials/create.html'
+            .when('/taskset/create', {
+                templateUrl: '/assets/partials/createTaskset.html'
             })
             .when('/users/edit/:firstName/:lastName', {
                 templateUrl: '/assets/partials/update.html'
             })
-        .when('/tasksets/create', {
-            templateUrl: '/assets/partials/createTaskset.html'
-        })
             .when('/tasksets', {
                 templateUrl: '/assets/partials/tasksets.html'
             })
@@ -40,7 +38,7 @@ angular.module('myApp.routeConfig', ['ngRoute'])
     ])
 
 @commonModule = angular.module('myApp.common', [])
-@controllersModule = angular.module('myApp.controllers', [])
+@controllersModule = angular.module('myApp.controllers', ['ngFileUpload'])
 @servicesModule = angular.module('myApp.services', [])
 @modelsModule = angular.module('myApp.models', [])
 @directivesModule = angular.module('myApp.directives', [])

@@ -1,54 +1,26 @@
 <div ng-controller="CreateTasksetCtrl as ctc">
-    <h1>Create Taskset</h1>
-
-    <form id="CreateTasksetForm" name="CreateTasksetForm"
-          class="form-horizontal" role="form"
-          ng-submit="ctc.createTaskset()">
-        <legend class="sm-col-12">Basic Information</legend>
-
-        <div class="form-group">
-            <label id="lbl_tasksetName" for="tasksetName" class="col-sm-4 control-label">Name</label>
-
-            <div class="col-sm-8">
-                <input type="text" class="form-control" name="tasksetName" id="tasksetName"
-                       placeholder=""
-                       ng-model="ctc.taskset._id">
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label id="lbl_tasksetName" for="tasksetName" class="col-sm-4 control-label">Name</label>
-
-            <div class="col-sm-8">
-                <input type="text" class="form-control" name="tasksetName" id="tasksetName"
-                       placeholder=""
-                       ng-model="ctc.taskset._id">
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label id="lbl_tasksetName" for="tasksetName" class="col-sm-4 control-label">Name</label>
-
-            <div class="col-sm-8">
-                <input type="text" class="form-control" name="tasksetName" id="tasksetName"
-                       placeholder=""
-                       ng-model="ctc.taskset._id">
-            </div>
-        </div>
-        <pre>{{ ctc.taskset | json }}</pre>
-
-        <div class="form-group">
-            <div class="col-sm-offset-4 col-sm-8 text-right">
-                <a ng-href="/#/" id="btn_cancel"
-                   class="btn btn-warning">Cancel</a>
-
-                <button type="submit" class="btn btn-success" id="btn_create">
-                    Create Taskset
-                </button>
-            </div>
-        </div>
-
-
+    <form name="myForm">
+        <fieldset>
+            <legend>Upload Linkset</legend>
+            Name:
+            <input type="text" name="tasksetName" ng-model="tasksetName" size="31"
+                   required>
+            <i ng-show="myForm.tasksetName.$error.required">*required</i>
+            <br>Linkset:
+            <input type="file" ngf-select ng-model="linksetFile" name="file"
+                    required ngf-model-invalid="errorFiles">
+            <i ng-show="myForm.linksetFile.$error.required">*required</i><br>
+            <br>
+            <button ng-disabled="!myForm.$valid"
+                    ng-click="ctc.uploadLinkset(linksetFile)">Submit
+            </button>
+      <span class="progress" ng-show="linksetFile.progress >= 0">
+        <div style="width:{{linksetFile.progress}}%"
+             ng-bind="linksetFile.progress + '%'"></div>
+      </span>
+            <span ng-show="linksetFile.result">Upload Successful</span>
+            <span class="err" ng-show="errorMsg">{{errorMsg}}</span>
+        </fieldset>
+        <br>
     </form>
 </div>
-
