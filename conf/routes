@@ -4,31 +4,26 @@
 # Note: @controllers syntax signifies the actual controller instance, retrieved via GlobalSettings.getController().
 # ~~~~
 
-# Single endpoint for serving AngularJS
-GET           /                                 @controllers.Application.index
-GET           /randomUUID                       @controllers.Application.randomUUID
+# Frontend
+GET         /                                 @controllers.Application.index
+GET         /taskset                          @controllers.Application.taskset
 
 # User management API
-GET           /users                            @controllers.Users.findUsers
-POST          /user                             @controllers.Users.createUser
-PUT           /user/:firstName/:lastName        @controllers.Users.updateUser(firstName: String, lastName: String)
-POST          /person                           @controllers.Persons.createPerson
-# POST        /tasksets                         @controllers.Tasksets.createTaskset
+GET         /users                            @controllers.Users.findUsers
+POST        /user                             @controllers.Users.createUser
+PUT         /user/:firstName/:lastName        @controllers.Users.updateUser(firstName: String, lastName: String)
+POST        /person                           @controllers.Persons.createPerson
+# POST        /tasksets                         @controllers.Tasksets.taskset
 
-PUT           /tasks                            @controllers.Tasks.createBulk
+PUT         /tasks                            @controllers.Tasks.createBulk
 
-GET           /tasksets/:id                     @controllers.Tasksets.one(id: java.util.UUID)
-GET           /tasksets                         @controllers.Tasksets.all
-POST          /tasksets                         @controllers.Tasksets.create
-PUT           /tasksets/:id                     @controllers.Tasksets.update(id: java.util.UUID)
-DELETE        /tasksets/:id                     @controllers.Tasksets.delete(id: java.util.UUID)
 # Map static resources from the /public folder to the /assets URL path
-GET           /assets/*file                     controllers.Assets.versioned(path="/public", file: Asset)
+GET         /assets/*file                     controllers.Assets.versioned(path="/public", file: Asset)
 
 
 
 
-# GET           /                                 controllers.Assets.at(path="/public", file="index.html")
+# GET           /                                 controllers.Assets.at(path="/public", file="main.html")
 
 # GET        /assets/*file                 controllers.Assets.at(path="/public", file)
 

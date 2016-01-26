@@ -18,7 +18,7 @@ class ApplicationIT extends Specification {
       }
     }
 
-    "render the index page" in {
+    "render the main page" in {
       running(FakeApplication()) {
         val home = route(FakeRequest(GET, "/")).get
         status(home) must equalTo(OK)

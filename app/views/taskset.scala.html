@@ -1,0 +1,6 @@
+@(tasksetForm: Form[Taskset])(implicit messages: Messages)
+@main("Create Taskset") {
+    @helper.form(action = routes.Application.taskset()) {
+        @helper.inputText(tasksetForm("name"))
+    }
+}

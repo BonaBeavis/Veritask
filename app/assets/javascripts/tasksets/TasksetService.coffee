@@ -22,7 +22,7 @@ class TasksetService
     deferred.promise
 
   createTaskset: (taskset) ->
-    @$log.debug "createTaskset #{angular.toJson(taskset, true)}"
+    @$log.debug "taskset #{angular.toJson(taskset, true)}"
     deferred = @$q.defer()
 
     @$http.post('/tasksets', taskset)

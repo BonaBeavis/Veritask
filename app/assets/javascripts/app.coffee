@@ -20,7 +20,7 @@ angular.module('myApp.routeConfig', ['ngRoute'])
                 templateUrl: '/assets/partials/viewTasksets.html'
             })
             .when('/taskset/create', {
-                templateUrl: '/assets/partials/createTaskset.html'
+            templateUrl: '/assets/partials/taskset.html'
             })
             .when('/users/edit/:firstName/:lastName', {
                 templateUrl: '/assets/partials/update.html'

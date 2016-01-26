@@ -11,7 +11,7 @@ class CreateTasksetCtrl
         tasksetName: $scope.tasksetName)
 
   createTaskset: () ->
-    @$log.debug "createTaskset()"
+    @$log.debug "taskset()"
     @taskset.active = true
     @TasksetService.createTaskset(@taskset)
     .then(
