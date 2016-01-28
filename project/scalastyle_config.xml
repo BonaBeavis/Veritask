@@ -113,7 +113,9 @@
             <parameter name="maxMethods"><![CDATA[30]]></parameter>
         </parameters>
     </check>
-    <check level="warning" class="org.scalastyle.scalariform.PublicMethodsHaveTypeChecker" enabled="true"></check>
+    <check level="warning"
+           class="org.scalastyle.scalariform.PublicMethodsHaveTypeChecker"
+           enabled="false"></check>
     <check level="warning" class="org.scalastyle.file.NewLineAtEofChecker" enabled="true"></check>
     <check level="warning" class="org.scalastyle.file.NoNewLineAtEofChecker" enabled="false"></check>
     <check level="warning" class="org.scalastyle.scalariform.WhileChecker" enabled="false"></check>
@@ -132,7 +134,9 @@
             <parameter name="regex"><![CDATA[^[A-Z][A-Za-z]*$]]></parameter>
         </parameters>
     </check>
-    <check level="warning" class="org.scalastyle.scalariform.UnderscoreImportChecker" enabled="true"></check>
+    <check level="warning"
+           class="org.scalastyle.scalariform.UnderscoreImportChecker"
+           enabled="false"></check>
     <check level="warning" class="org.scalastyle.scalariform.LowercasePatternMatchChecker" enabled="true"></check>
     <check level="warning" class="org.scalastyle.scalariform.MultipleStringLiteralsChecker" enabled="true">
         <parameters>

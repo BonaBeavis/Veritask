@@ -21,21 +21,10 @@ object Task extends ConfigBanana {
       .apply(_id, s, p, o)(Task.apply, Task.unapply)
   implicit val userFormat = Json.format[Task]
 
-  def create(triple: Rdf#Triple): Task = {
-    val (s, p, o) = fromTriple(triple)
-    val task = Task(None, s.toString, p.toString, o.toString)
-    TaskIdentity.set(task, TaskIdentity.generateID(task))
-  }
+  //  def create(triple: Rdf#Triple): Task = {
+  //    val (s, p, o) = fromTriple(triple)
+  //    val task = Task(None, s.toString, p.toString, o.toString)
+  //    TaskMongoIdentity$.set(task, TaskMongoIdentity$.generateID(task))
+  //  }
 
-  implicit object TaskIdentity extends Identity[Task, String] {
-    val name = "_id"
-
-    def of(task: Task): Option[String] = task._id
-
-    def set(task: Task, id: String): Task = task.copy(_id = Option(id))
-
-    def generateID(task: Task): String = {
-      play.api.libs.Codecs.sha1(task.s + task.p + task.o)
-    }
-  }
 }

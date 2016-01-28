@@ -23,12 +23,14 @@ UglifyKeys.uglifyOps := { js =>
 resolvers += "bblfish-snapshots" at "http://bblfish.net/work/repo/snapshots/"
 resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
 resolvers += "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
+resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 
 libraryDependencies ++= Seq(
   "com.google.inject" % "guice" % "4.0",
   "javax.inject" % "javax.inject" % "1",
   "org.reactivemongo" %% "play2-reactivemongo" % "0.11.7.play24",
-  "org.webjars" % "bootstrap" % "3.3.6",
+  "org.reactivemongo" % "reactivemongo-extensions-json_2.11" % "0.11.7.play24",
+  "com.adrianhurt" %% "play-bootstrap" % "1.0-P24-B3-SNAPSHOT",
   "org.mockito" % "mockito-core" % "1.10.19" % "test"
 )
 

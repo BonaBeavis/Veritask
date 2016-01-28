@@ -1,17 +1,16 @@
 package services
 
-import java.util.UUID
 import javax.inject.Inject
 
 import com.google.inject.ImplementedBy
-import models.Taskset
+import models.Task
 import play.modules.reactivemongo.{MongoController, ReactiveMongoApi, ReactiveMongoComponents}
 
-@ImplementedBy(classOf[TasksetMongoService])
-trait TasksetService extends CRUDService[Taskset, UUID]
+@ImplementedBy(classOf[TaskMongoService])
+trait TaskService extends CRUDService[Task, String]
 
 import play.modules.reactivemongo.json.collection._
 
-class TasksetMongoService @Inject()(val reactiveMongoApi: ReactiveMongoApi) extends MongoCRUDService[Taskset, UUID] with TasksetService with ReactiveMongoComponents with MongoController {
-  override val collection: JSONCollection = db.collection("Taskset")
+abstract class TaskMongoService @Inject()(val reactiveMongoApi: ReactiveMongoApi) extends MongoCRUDService[Task, String] with TaskService with ReactiveMongoComponents with MongoController {
+  override val collection: JSONCollection = db.collection("Task")
 }

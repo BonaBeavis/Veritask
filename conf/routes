@@ -6,7 +6,10 @@
 
 # Frontend
 GET         /                                 @controllers.Application.index
-GET         /taskset                          @controllers.Application.taskset
+GET         /taskset                          @controllers.Tasksets.viewTaskset
+
+# Forms
+POST        /taskset                          @controllers.Tasksets.createTaskset
 
 # User management API
 GET         /users                            @controllers.Users.findUsers
@@ -15,7 +18,7 @@ PUT         /user/:firstName/:lastName        @controllers.Users.updateUser(firs
 POST        /person                           @controllers.Persons.createPerson
 # POST        /tasksets                         @controllers.Tasksets.taskset
 
-PUT         /tasks                            @controllers.Tasks.createBulk
+#PUT         /tasks                            @controllers.Tasks.createBulk
 
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file                     controllers.Assets.versioned(path="/public", file: Asset)

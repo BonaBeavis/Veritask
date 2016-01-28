@@ -2,12 +2,9 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
-import models.Taskset
 import org.slf4j.{Logger, LoggerFactory}
-import play.api.data._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
-
 /**
   * Instead of declaring an object of Application as per the template project, we must declare a class given that
   * the application context is going to be responsible for creating it and wiring it up with the UUID generator service.
@@ -20,12 +17,8 @@ class Application @Inject()(val messagesApi: MessagesApi) extends Controller wit
 
   def index = Action {
     logger.info("Serving main page...")
-
     Ok(views.html.index())
   }
 
-  def taskset(implicit tasksetForm: Form[Taskset]): Action[AnyContent] = Action {
-    Ok(views.html.taskset(tasksetForm))
-  }
 
 }
