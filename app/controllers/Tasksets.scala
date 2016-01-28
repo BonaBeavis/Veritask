@@ -2,8 +2,8 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
-import models.Taskset
 import models.Taskset.tasksetForm
+import models.{Taskset, TasksetDao}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
@@ -23,21 +23,12 @@ class Tasksets @Inject()(val reactiveMongoApi: ReactiveMongoApi, val messagesApi
   def createTaskset = Action.async { implicit request =>
     tasksetForm.bindFromRequest().fold(
       formWithErrors => Future.successful(BadRequest("Form validation failed")),
-      taskset => {
-        val selector = Json.obj("name" -> taskset.name)
-        collection.count(Option(selector), limit = 1) flatMap {
-          case count: Int if count == 0 =>
-            collection.update(selector, taskset, upsert = true) map {
-              case success: WriteResult if success.ok => Created(views.html.index())
-              case failure: WriteResult => InternalServerError(failure.message)
-            }
-          case _ => Future.successful(UnprocessableEntity("Taskset with this name exists"))
-        }
+      taskset => TasksetDao.create(taskset) map {
+        case success: WriteResult if success.ok => Created(views.html.index())
+        case failure: WriteResult => InternalServerError(failure.message)
       }
     )
   }
-
-  def collection: JSONCollection = db.collection[JSONCollection]("Tasksets")
 
   def viewTaskset = Action {
     Ok(views.html.taskset(tasksetForm))
@@ -53,4 +44,6 @@ class Tasksets @Inject()(val reactiveMongoApi: ReactiveMongoApi, val messagesApi
       }
     }
   }
+
+  def collection: JSONCollection = db.collection[JSONCollection]("Tasksets")
 }
