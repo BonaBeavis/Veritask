@@ -6,7 +6,8 @@
 
 # Frontend
 GET         /                                 @controllers.Application.index
-GET         /tasksets                         @controllers.Tasksets.viewTaskset(id: Option[String])
+GET         /createTaskset                    @controllers.Tasksets.createTaskset
+GET         /tasksets/:id                     @controllers.Tasksets.viewTaskset(id: String)
 GET         /listTasksets                     @controllers.Tasksets.listTasksets
 
 # Forms

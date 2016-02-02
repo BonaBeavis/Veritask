@@ -14,4 +14,9 @@
         @b3.url(tasksetForm("objectEndpoint"), '_label -> "objectEndpoint")
         @b3.submit('class -> "btn btn-default") { Submit }
     }
+    @if(tasksetForm("_id").value.isDefined) {
+        <h1>ID Defined</h1>
+    } else {
+        <h1>ID NOT notdefinded</h1>
+    }
 }

@@ -31,14 +31,15 @@ class Tasksets @Inject()(val reactiveMongoApi: ReactiveMongoApi, val messagesApi
     )
   }
 
-  def viewTaskset(id: Option[String]) = Action.async {
-    id match {
-      case Some(_id) => TasksetDao.findById(UUID.fromString(_id)) map {
-        case Some(taskset) =>
-          Ok(views.html.taskset(tasksetForm.fillAndValidate(taskset)))
-        case None => NoContent
-      }
-      case None => Future.successful(Ok(views.html.taskset(tasksetForm)))
+  def createTaskset = Action {
+    Ok(views.html.taskset(tasksetForm))
+  }
+
+  def viewTaskset(id: String) = Action.async {
+    TasksetDao.findById(UUID.fromString(id)) map {
+      case Some(taskset) =>
+        Ok(views.html.taskset(tasksetForm.fillAndValidate(taskset)))
+      case None => NoContent
     }
   }
 

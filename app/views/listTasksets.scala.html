@@ -3,7 +3,7 @@
 @main("Select a Taskset") {
     <div class="list-group">
     @for(taskset <- tasksets) {
-        <a href='@routes.Tasksets.viewTaskset(Option(taskset._id.toString))' class="list-group-item">@taskset.name</a>
+        <a href='@routes.Tasksets.viewTaskset(taskset._id.toString)' class="list-group-item">@taskset.name</a>
     }
     </div>
 }
