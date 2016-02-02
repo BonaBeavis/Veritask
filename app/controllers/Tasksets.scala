@@ -1,5 +1,6 @@
 package controllers
 
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import models.Taskset.tasksetForm
@@ -20,18 +21,32 @@ import scala.concurrent.Future
 class Tasksets @Inject()(val reactiveMongoApi: ReactiveMongoApi, val messagesApi: MessagesApi)
   extends Controller with MongoController with ReactiveMongoComponents with I18nSupport {
 
-  def createTaskset = Action.async { implicit request =>
+  def upsertTaskset = Action.async { implicit request =>
     tasksetForm.bindFromRequest().fold(
       formWithErrors => Future.successful(BadRequest("Form validation failed")),
-      taskset => TasksetDao.create(taskset) map {
+      taskset => TasksetDao.save(taskset) map {
         case success: WriteResult if success.ok => Created(views.html.index())
         case failure: WriteResult => InternalServerError(failure.message)
       }
     )
   }
 
-  def viewTaskset = Action {
-    Ok(views.html.taskset(tasksetForm))
+  def viewTaskset(id: Option[String]) = Action.async {
+    id match {
+      case Some(_id) => TasksetDao.findById(UUID.fromString(_id)) map {
+        case Some(taskset) =>
+          Ok(views.html.taskset(tasksetForm.fillAndValidate(taskset)))
+        case None => NoContent
+      }
+      case None => Future.successful(Ok(views.html.taskset(tasksetForm)))
+    }
+  }
+
+  def listTasksets = Action.async {
+    TasksetDao.findAll() map {
+      case tasksets: List[Taskset] => Ok(views.html.listTasksets(tasksets))
+      case _ => InternalServerError("Could not get Tasksets")
+    }
   }
 
   def geTasksetNames: Future[List[String]] = {

@@ -6,10 +6,11 @@
 
 # Frontend
 GET         /                                 @controllers.Application.index
-GET         /taskset                          @controllers.Tasksets.viewTaskset
+GET         /tasksets                         @controllers.Tasksets.viewTaskset(id: Option[String])
+GET         /listTasksets                     @controllers.Tasksets.listTasksets
 
 # Forms
-POST        /taskset                          @controllers.Tasksets.createTaskset
+POST        /tasksets                         @controllers.Tasksets.upsertTaskset
 
 # User management API
 GET         /users                            @controllers.Users.findUsers

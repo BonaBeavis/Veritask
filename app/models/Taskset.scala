@@ -38,9 +38,6 @@ object Taskset {
 
 import play.api.Play.current
 
-object TasksetDao extends JsonDao[Taskset, UUID](current.injector.instanceOf[ReactiveMongoApi].db, "taskset") {
+object TasksetDao extends JsonDao[Taskset, UUID](current.injector.instanceOf[ReactiveMongoApi].db, "taskset")
 
-  def create(taskset: Taskset) = {
-    TasksetDao.insert(taskset)
-  }
-}
+

@@ -16,7 +16,6 @@ class Application @Inject()(val messagesApi: MessagesApi) extends Controller wit
   private final val logger: Logger = LoggerFactory.getLogger(classOf[Application])
 
   def index = Action {
-    logger.info("Serving main page...")
     Ok(views.html.index())
   }
 
