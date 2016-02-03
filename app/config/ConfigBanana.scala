@@ -7,12 +7,7 @@ import org.w3.banana.sesame._
   * Created by beavis on 02.12.15.
   */
 trait ConfigBanana
-  extends RDFModule
-  with RDFOpsModule
-  with RecordBinderModule
-  with JsonLDReaderModule
-  with SesameModule {
-
+  extends SesameModule {
   val foaf = FOAFPrefix[Rdf]
   val cert = CertPrefix[Rdf]
   val vt = VTPrefix[Rdf]

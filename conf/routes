@@ -5,19 +5,18 @@
 # ~~~~
 
 # Frontend
-GET         /                                 @controllers.Application.index
-GET         /createTaskset                    @controllers.Tasksets.createTaskset
-GET         /tasksets/:id                     @controllers.Tasksets.viewTaskset(id: String)
-GET         /listTasksets                     @controllers.Tasksets.listTasksets
-
-# Forms
-POST        /tasksets                         @controllers.Tasksets.upsertTaskset
+GET         /                                             @controllers.Application.index
+GET         /createTaskset                                @controllers.Tasksets.createTaskset
+GET         /listTasksets                                 @controllers.Tasksets.listTasksets
+GET         /tasksets/:id                                 @controllers.Tasksets.viewTaskset(id: String)
+GET         /tasksets/:tasksetId/uploadLinksetFile        @controllers.Tasksets.uploadLinksetFile(tasksetId: String)
+POST        /tasksets                                     @controllers.Tasksets.postTaskset
 
 # User management API
-GET         /users                            @controllers.Users.findUsers
-POST        /user                             @controllers.Users.createUser
-PUT         /user/:firstName/:lastName        @controllers.Users.updateUser(firstName: String, lastName: String)
-POST        /person                           @controllers.Persons.createPerson
+GET         /users                                        @controllers.Users.findUsers
+POST        /user                                         @controllers.Users.createUser
+PUT         /user/:firstName/:lastName                    @controllers.Users.updateUser(firstName: String, lastName: String)
+POST        /person                                       @controllers.Persons.createPerson
 # POST        /tasksets                         @controllers.Tasksets.taskset
 
 #PUT         /tasks                            @controllers.Tasks.createBulk

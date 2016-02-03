@@ -5,7 +5,7 @@
     }
 
 @main("Create Taskset") {
-    @b3.form(routes.Tasksets.upsertTaskset) {
+    @b3.form(routes.Tasksets.postTaskset) {
         @b3.text(tasksetForm("name"), '_label -> "Name")
         @b3.url(tasksetForm("subjectsTarget"), '_label -> "subjectsTarget")
         @b3.url(tasksetForm("linkPredicate"), '_label -> "linkPredicate")

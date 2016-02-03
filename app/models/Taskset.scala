@@ -38,6 +38,8 @@ object Taskset {
 
 import play.api.Play.current
 
-object TasksetDao extends JsonDao[Taskset, UUID](current.injector.instanceOf[ReactiveMongoApi].db, "taskset")
+object TasksetDao extends JsonDao[Taskset, UUID](current.injector.instanceOf[ReactiveMongoApi].db, "tasksets") {
+  def findByIdString(idString: String) = findById(UUID.fromString(idString))
+}
 
 
