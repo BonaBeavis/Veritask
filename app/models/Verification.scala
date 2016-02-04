@@ -1,26 +1,14 @@
 package models
 
-import config.ConfigBanana
 import play.api.libs.json.Json
 
 /**
   * Created by beavis on 03.12.15.
   */
-case class Verification(verifier: Person, result: Boolean) {
+case class Verification(verifier: String, result: Boolean) {
 }
 
-object Verification extends ConfigBanana {
+object Verification {
 
-  import ops._
-  import recordBinder._
-  val clazz = URI("http://example.com/Verification#class")
-  implicit val classUris = classUrisFor[Verification](clazz)
-
-  val verifier = property[Person](vt.Verifier)
-  val result = property[Boolean](vt.Result)
-
-  implicit val container = URI("http://example.com/Verification/")
-  implicit val binder =
-    pgb[Verification](verifier, result)(Verification.apply, Verification.unapply)
   implicit val verificationFormat = Json.format[Task]
 }
