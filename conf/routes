@@ -9,7 +9,7 @@ GET         /                                             @controllers.Applicati
 GET         /createTaskset                                @controllers.Tasksets.createTaskset
 GET         /listTasksets                                 @controllers.Tasksets.listTasksets
 GET         /tasksets/:id                                 @controllers.Tasksets.viewTaskset(id: String)
-GET         /tasksets/:tasksetId/uploadLinksetFile        @controllers.Tasksets.uploadLinksetFile(tasksetId: String)
+POST        /tasksets/:tasksetId/uploadLinksetFile        @controllers.Tasksets.uploadLinksetFile(tasksetId: String)
 POST        /tasksets                                     @controllers.Tasksets.postTaskset
 
 # User management API

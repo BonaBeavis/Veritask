@@ -18,7 +18,7 @@ import reactivemongo.api.Cursor
 import reactivemongo.api.commands.WriteResult
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 class TasksetRequest[A](val taskset: Taskset, request: Request[A]) extends WrappedRequest[A](request)
 
@@ -34,15 +34,31 @@ class Tasksets @Inject()(val reactiveMongoApi: ReactiveMongoApi, val messagesApi
   def uploadLinksetFile(tasksetId: String) =
     (Action andThen TasksetAction(tasksetId)).async(parse.multipartFormData) { request =>
       request.body.file("linkset") match {
-        case Some(linkset) =>
-          jsonldReader.read(new FileReader(linkset.ref.file), "") match {
-            case Success(graph) =>
-              TaskDao.bulkInsert(parseLinksetGraph(graph, request.taskset)).map { i => Ok(i) }
-            case Failure(failure) => Future.successful(InternalServerError(failure))
-          }
-        case None => Future.successful(BadRequest("No RDF file"))
+        case Some(linkset) => parseLinksetFile(linkset.ref.file, request.taskset) match {
+          case Success(tasks) => TaskDao.bulkInsert(tasks) map { x => Ok(x.toString + " inserted") }
+          case Failure(failure) => Future.successful(BadRequest("File could not be parsed"))
       }
+        case None => Future.successful(BadRequest("No RDF file"))
     }
+    }
+
+  def parseLinksetFile(linksetFile: java.io.File, taskset: Taskset): Try[Iterable[Task]] = {
+    import ops._
+    jsonldReader.read(new FileReader(linksetFile), "") map {
+      graph => graph.triples map (taskFromTriple(_, taskset))
+    }
+  }
+
+  def taskFromTriple(triple: Rdf#Triple, taskset: Taskset): Task = {
+    import ops._
+    val (s, _, o) = fromTriple(triple)
+    Task(
+      UUID.randomUUID(),
+      taskset._id,
+      s.toString,
+      o.toString
+    )
+  }
 
   def TasksetAction(tasksetId: String) = new ActionRefiner[Request, TasksetRequest] {
     def refine[A](input: Request[A]) =
@@ -52,21 +68,20 @@ class Tasksets @Inject()(val reactiveMongoApi: ReactiveMongoApi, val messagesApi
       }
   }
 
-  def parseLinksetGraph(graph: Rdf#Graph, taskset: Taskset): Iterable[Task] = {
-    import ops._
-    graph.triples.collect {
-      case triple: Rdf#Triple if isTripleInTaskset(triple, taskset) =>
-        val (s, p, _) = fromTriple(triple)
-        Task(UUID.randomUUID(), taskset._id.toString, s.toString, p.toString, s.toString)
-    }
-  }
+  //  def parseLinksetGraph(graph: Rdf#Graph, taskset: Taskset): Iterable[Task] = {
+  //    import ops._
+  //    graph.triples.map {
+  //      x => taskFromTriple(x, taskset)
+  //    }
+  //  }
 
-  def isTripleInTaskset(triple: Rdf#Triple, taskset: Taskset): Boolean = {
-    import ops._
-    triple.getSubject.toUri.fragmentLess.getString == taskset.subjectsTarget &&
-      triple.getPredicate.getString == taskset.linkPredicate &&
-      triple.getObject.toUri.fragmentLess.getString == taskset.objectsTarget
-  }
+  //  def isTripleInTaskset(triple: List[Rdf#URI], taskset: Taskset): Boolean = {
+  //    import ops._
+  //    import recordBinder._
+  //    foldNode[String](triple.getSubject)(_)
+  //    triple.getPredicate.getString == taskset.linkPredicate &&
+  //    triple.getObject.toUri.fragmentLess.getString == taskset.objectsTarget
+  //  }
 
   def postTaskset = Action.async { implicit request =>
     tasksetForm.bindFromRequest().fold(

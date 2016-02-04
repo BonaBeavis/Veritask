@@ -15,7 +15,13 @@
         @b3.submit('class -> "btn btn-default") { Submit }
     }
     @if(tasksetForm("_id").value.isDefined) {
-        <h1>ID Defined</h1>
+        @helper.form(action = routes.Tasksets.uploadLinksetFile(tasksetForm("_id").value.get), 'enctype -> "multipart/form-data") {
+            <input type="file" name="linkset">
+
+            <p>
+                <input type="submit">
+            </p>
+        }
     } else {
         <h1>ID NOT notdefinded</h1>
     }
