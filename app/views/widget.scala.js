@@ -1,14 +1,20 @@
+@
+(implicit
+RequestHeader
+)
 (function () {
 
 // Localize jQuery variable
     var jQuery;
-
     /******** Load jQuery if not present *********/
-    if (window.jQuery === undefined || window.jQuery.fn.jquery !== '1.4.2') {
+    if (window.jQuery === undefined || window.jQuery.fn.jquery !== '2.1.4') {
         var script_tag = document.createElement('script');
         script_tag.setAttribute("type", "text/javascript");
         script_tag.setAttribute("src",
-            "http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js");
+            "@routes.Assets.versioned("
+        lib / jquery / jquery.js
+        ").absoluteURL"
+    )
         if (script_tag.readyState) {
             script_tag.onreadystatechange = function () { // For old versions of IE
                 if (this.readyState == 'complete' || this.readyState == 'loaded') {
@@ -40,20 +46,21 @@
         jQuery(document).ready(function ($) {
             /******* Load CSS *******/
             var css_link = $("<link>", {
-                rel: "stylesheet",
-                type: "text/css",
-                href: "http://example.com/cleanslate.css"
-            });
+                    rel: "stylesheet",
+                    type: "text/css",
+                    href: "@routes.Assets.versioned("
+                    lib / bootstrap / css / bootstrap.css
+            ").absoluteURL"
+        })
             css_link.appendTo('head');
-            $('#example-widget-container').append('<input type="button" value="new button" />');
-            $('#example-widget-container').append('<input type="button" value="new button" />');
             /******* Load HTML *******/
-            var jsonp_url = "http://localhost:9000/widget?callback=?";
-            $.getJSON(jsonp_url, function (data) {
-                $('#example-widget-container').append("This data comes from another server: " + data.html);
-            });
+            loadTemplate();
         });
     }
 
-
+    function loadTemplate() {
+        jQuery.getJSON("http://localhost:9000/template?callback=?", function (data) {
+            jQuery('#example-widget-container').append(data.html);
+        });
+    }
 })(); // We call our anonymous function immediately

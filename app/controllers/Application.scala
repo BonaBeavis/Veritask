@@ -4,7 +4,10 @@ import javax.inject.{Inject, Singleton}
 
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.libs.Jsonp
+import play.api.libs.json.Json
 import play.api.mvc._
+import play.api.routing.JavaScriptReverseRouter
 /**
   * Instead of declaring an object of Application as per the template project, we must declare a class given that
   * the application context is going to be responsible for creating it and wiring it up with the UUID generator service.
@@ -19,5 +22,21 @@ class Application @Inject()(val messagesApi: MessagesApi) extends Controller wit
     Ok(views.html.index())
   }
 
+  def template(callback: String) = Action {
+    val json = Json.obj("html" -> Json.toJson(views.html.widget.render().toString))
+    Ok(Jsonp(callback, json))
+  }
 
+  def widget = Action { request =>
+    Ok(views.js.widget.render(request))
+  }
+
+  def javascriptRoutes = Action { implicit request =>
+    Ok(
+      JavaScriptReverseRouter("jsRoutes")(
+        routes.javascript.Application.template,
+        routes.javascript.Assets.versioned
+      )
+    ).as("text/javascript")
+  }
 }
