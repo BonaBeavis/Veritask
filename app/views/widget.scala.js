@@ -1,7 +1,4 @@
-@
-(implicit
-RequestHeader
-)
+@(implicit request: RequestHeader)
 (function () {
 
 // Localize jQuery variable
@@ -10,11 +7,8 @@ RequestHeader
     if (window.jQuery === undefined || window.jQuery.fn.jquery !== '2.1.4') {
         var script_tag = document.createElement('script');
         script_tag.setAttribute("type", "text/javascript");
-        script_tag.setAttribute("src",
-            "@routes.Assets.versioned("
-        lib / jquery / jquery.js
-        ").absoluteURL"
-    )
+        script_tag.setAttribute("src", '@routes.Assets.versioned("lib/jquery/jquery.js").absoluteURL'
+        )
         if (script_tag.readyState) {
             script_tag.onreadystatechange = function () { // For old versions of IE
                 if (this.readyState == 'complete' || this.readyState == 'loaded') {
@@ -46,12 +40,10 @@ RequestHeader
         jQuery(document).ready(function ($) {
             /******* Load CSS *******/
             var css_link = $("<link>", {
-                    rel: "stylesheet",
-                    type: "text/css",
-                    href: "@routes.Assets.versioned("
-                    lib / bootstrap / css / bootstrap.css
-            ").absoluteURL"
-        })
+                rel: "stylesheet",
+                type: "text/css",
+                href: '@routes.Assets.versioned("lib/bootstrap/css/bootstrap.css ").absoluteURL'
+            })
             css_link.appendTo('head');
             /******* Load HTML *******/
             loadTemplate();
