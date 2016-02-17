@@ -1,5 +1,6 @@
 @(implicit request: RequestHeader)
-(function () {
+
+var veritask = function() {
 
 // Localize jQuery variable
     var jQuery;
@@ -42,17 +43,33 @@
             var css_link = $("<link>", {
                 rel: "stylesheet",
                 type: "text/css",
-                href: '@routes.Assets.versioned("lib/bootstrap/css/bootstrap.css ").absoluteURL'
+                href: '@routes.Assets.versioned("lib/bootstrap/css/bootstrap.css").absoluteURL'
             })
             css_link.appendTo('head');
+            jQuery('#example-widget-container').hide();
             /******* Load HTML *******/
-            loadTemplate();
+            loadWidgetHTML();
         });
     }
 
-    function loadTemplate() {
-        jQuery.getJSON("http://localhost:9000/template?callback=?", function (data) {
+    function loadWidgetHTML() {
+        jQuery.get('@routes.Application.widgetHTML.absoluteURL', function (data) {
+            jQuery('#example-widget-container').append(data);
+        });
+    }
+
+    function getTask() {
+        jQuery('#example-widget-container').show();
+        jQuery.getJSON('@routes.Application.getTask.absoluteURL', function (data) {
             jQuery('#example-widget-container').append(data.html);
         });
     }
-})(); // We call our anonymous function immediately
+
+    function commitVerification() {
+
+    }
+
+    return {
+        getTask: getTask
+    };
+}(); // We call our anonymous function immediately

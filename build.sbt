@@ -34,6 +34,7 @@ libraryDependencies ++= Seq(
   "org.mockito" % "mockito-core" % "1.10.19" % "test"
 )
 
+libraryDependencies += filters
 libraryDependencies += specs2 % Test
 libraryDependencies += "org.w3" %% "banana-sesame" % "0.8.2-SNAPSHOT" //"0.8.1"
 

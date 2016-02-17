@@ -2,12 +2,16 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
+import models.TaskDao
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.Jsonp
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.api.routing.JavaScriptReverseRouter
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.twirl.api.Html
+
 /**
   * Instead of declaring an object of Application as per the template project, we must declare a class given that
   * the application context is going to be responsible for creating it and wiring it up with the UUID generator service.
@@ -27,6 +31,19 @@ class Application @Inject()(val messagesApi: MessagesApi) extends Controller wit
     Ok(Jsonp(callback, json))
   }
 
+  def widgetHTML = Action {
+    Ok(views.html.widget())
+  }
+
+  def getTask = Action.async {
+    TaskDao.findRandom() map {
+      case Some(task) => Ok(Json.obj("html" -> Json.toJson(views.html.template(task)(Html("@task.subjectURL")).toString())))
+      case None => Ok("nothing found")
+    }
+//    val template = views.html.template(task)
+//    val json = Json.obj("html" -> Json.toJson(views.html.template(task).render().toString))
+//    Ok(json)
+  }
   def widget = Action { request =>
     Ok(views.js.widget.render(request))
   }

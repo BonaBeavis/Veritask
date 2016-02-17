@@ -17,7 +17,8 @@ POST        /tasksets                                     @controllers.Tasksets.
 GET         /javascriptRoutes                             @controllers.Application.javascriptRoutes
 GET         /template                                     @controllers.Application.template(callback: String)
 GET         /widget                                       @controllers.Application.widget
-
+GET         /widgetHTML                                   @controllers.Application.widgetHTML
+GET         /getTask                                      @controllers.Application.getTask
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file                                 controllers.Assets.versioned(path="/public", file: Asset)
 
