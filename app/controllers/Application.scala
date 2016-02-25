@@ -31,13 +31,17 @@ class Application @Inject()(val messagesApi: MessagesApi) extends Controller wit
     Ok(Jsonp(callback, json))
   }
 
+  def getTemplate = Action {
+    Ok("r")
+  }
+
   def widgetHTML = Action {
     Ok(views.html.widget())
   }
 
   def getTask = Action.async {
     TaskDao.findRandom() map {
-      case Some(task) => Ok(Json.obj("html" -> Json.toJson(views.html.template(task)(Html("@task.subjectURL")).toString())))
+      case Some(task) => Ok(Json.toJson(task))
       case None => Ok("nothing found")
     }
 //    val template = views.html.template(task)

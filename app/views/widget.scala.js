@@ -9,7 +9,7 @@ var veritask = function() {
         var script_tag = document.createElement('script');
         script_tag.setAttribute("type", "text/javascript");
         script_tag.setAttribute("src", '@routes.Assets.versioned("lib/jquery/jquery.js").absoluteURL'
-        )
+        );
         if (script_tag.readyState) {
             script_tag.onreadystatechange = function () { // For old versions of IE
                 if (this.readyState == 'complete' || this.readyState == 'loaded') {
@@ -48,8 +48,14 @@ var veritask = function() {
             css_link.appendTo('head');
             jQuery('#example-widget-container').hide();
             /******* Load HTML *******/
+            laodJsRender();
             loadWidgetHTML();
         });
+    }
+
+    function laodJsRender() {
+       jQuery.getScript('@routes.Assets.versioned("lib/jsrender/jsrender.js").absoluteURL', function () {
+       });
     }
 
     function loadWidgetHTML() {
@@ -58,10 +64,45 @@ var veritask = function() {
         });
     }
 
+    var task;
     function getTask() {
-        jQuery('#example-widget-container').show();
-        jQuery.getJSON('@routes.Application.getTask.absoluteURL', function (data) {
-            jQuery('#example-widget-container').append(data.html);
+        //jQuery('#example-widget-container').show();
+        jQuery.getJSON('@routes.Application.getTask.absoluteURL', function(data) {
+            task = data;
+        });
+    }
+
+    function lazyGetTemplate(name) {
+        // If the named remote template is not yet loaded and compiled
+        // as a named template, fetch it. In either case, return a promise
+        // (already resolved, if the template has already been loaded)
+        var deferred = jQuery.Deferred();
+        if (jQuery.templates[name]) {
+            deferred.resolve();
+        } else {
+            jQuery.getScript(
+                    "//www.jsviews.com/samples/resources/templates/"
+                    + name + ".js")
+                .then(function() {
+                    if (jQuery.templates[name]) {
+                        deferred.resolve();
+                    } else {
+                        alert("Script: \"" + name + ".js\" failed to load");
+                        deferred.reject();
+                    }
+                });
+        }
+        return deferred.promise();
+    }
+
+    function showTask() {
+        jQuery.getJSON('@routes.Application.getTask.absoluteURL', function(data) {
+            task = data;
+            lazyGetTemplate(task.taskset).done(function() {
+                var html = jQuery.templates(task._id).render(task);
+                jQuery('#example-widget-container').html(html);
+                jQuery('#example-widget-container').show();
+            });
         });
     }
 
@@ -70,6 +111,6 @@ var veritask = function() {
     }
 
     return {
-        getTask: getTask
+        showTask: showTask
     };
 }(); // We call our anonymous function immediately

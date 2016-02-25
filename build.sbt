@@ -31,7 +31,8 @@ libraryDependencies ++= Seq(
   "org.reactivemongo" %% "play2-reactivemongo" % "0.11.7.play24",
   "org.reactivemongo" % "reactivemongo-extensions-json_2.11" % "0.11.7.play24",
   "com.adrianhurt" %% "play-bootstrap" % "1.0-P24-B3-SNAPSHOT",
-  "org.mockito" % "mockito-core" % "1.10.19" % "test"
+  "org.mockito" % "mockito-core" % "1.10.19" % "test",
+  "org.webjars.bower" % "jsrender" % "1.0.0-rc.70"
 )
 
 libraryDependencies += filters
