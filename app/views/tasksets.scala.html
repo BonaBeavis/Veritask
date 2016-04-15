@@ -1,7 +1,8 @@
 @(tasksets: List[Taskset])
 
-@main("Select a Taskset") {
+@main("") {
     <div class="list-group">
+        <a href='@routes.Tasksets.createTaskset' class="list-group-item">Create New</a>
     @for(taskset <- tasksets) {
         <a href='@routes.Tasksets.viewTaskset(taskset._id.toString)' class="list-group-item">@taskset.name</a>
     }

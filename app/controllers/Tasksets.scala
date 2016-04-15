@@ -107,7 +107,7 @@ class Tasksets @Inject()(val reactiveMongoApi: ReactiveMongoApi, val messagesApi
 
   def listTasksets = Action.async {
     TasksetDao.findAll() map {
-      case tasksets: List[Taskset] => Ok(views.html.listTasksets(tasksets))
+      case tasksets: List[Taskset] => Ok(views.html.tasksets(tasksets))
       case _ => InternalServerError("Could not get Tasksets")
     }
   }

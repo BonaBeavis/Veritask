@@ -6,9 +6,11 @@
 
 # Frontend
 GET         /                                             @controllers.Application.index
-GET         /createTaskset                                @controllers.Tasksets.createTaskset
-GET         /listTasksets                                 @controllers.Tasksets.listTasksets
+
+GET         /tasksets                                     @controllers.Tasksets.listTasksets
+GET         /taskset                                      @controllers.Tasksets.createTaskset
 GET         /tasksets/:id                                 @controllers.Tasksets.viewTaskset(id: String)
+
 POST        /tasksets/:tasksetId/uploadLinksetFile        @controllers.Tasksets.uploadLinksetFile(tasksetId: String)
 POST        /tasksets                                     @controllers.Tasksets.postTaskset
 
