@@ -16,7 +16,9 @@ case class Taskset(
                     linkPredicate: String,
                     objectsTarget: String,
                     subjectEndpoint: String,
-                    objectEndpoint: String
+                    objectEndpoint: String,
+                    subjectAttributeQueries: Option[List[String]],
+                    objectAttributeQueries: Option[List[String]]
                   )
 
 object Taskset {
@@ -31,7 +33,9 @@ object Taskset {
       "linkPredicate" -> text,
       "objectsTarget" -> text,
       "subjectEndpoint" -> text,
-      "objectEndpoint" -> text
+      "objectEndpoint" -> text,
+      "subjectAttributeQueries" -> optional(list(text)),
+      "objectAttributeQueries" -> optional(list(text))
     )(Taskset.apply)(Taskset.unapply)
   )
 }
