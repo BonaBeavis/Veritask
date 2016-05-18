@@ -39,15 +39,16 @@ class Application @Inject()(val messagesApi: MessagesApi) extends Controller wit
     Ok(views.html.widget())
   }
 
-  def getTask = Action.async {
-    TaskDao.findRandom() map {
-      case Some(task) => Ok(Json.toJson(task))
-      case None => Ok("nothing found")
-    }
-//    val template = views.html.template(task)
-//    val json = Json.obj("html" -> Json.toJson(views.html.template(task).render().toString))
-//    Ok(json)
-  }
+//  def getTask = Action.async {
+//    TaskDao.findRandom() map {
+//      case Some(task) => Ok(Json.toJson(task))
+//      case None => Ok("nothing found")
+//    }
+////    val template = views.html.template(task)
+////    val json = Json.obj("html" -> Json.toJson(views.html.template(task).render().toString))
+////    Ok(json)
+//  }
+
   def widget = Action { request =>
     Ok(views.js.widget.render(request))
   }

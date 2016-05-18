@@ -67,9 +67,9 @@ var veritask = function() {
     var task;
     function getTask() {
         //jQuery('#example-widget-container').show();
-        jQuery.getJSON('@routes.Application.getTask.absoluteURL', function(data) {
-            task = data;
-        });
+        // jQuery.getJSON('ATHIERHINroutes.Application.getTask.absoluteURL', function(data) {
+        //     task = data;
+        // });
     }
 
     function lazyGetTemplate(name) {
@@ -96,7 +96,7 @@ var veritask = function() {
     }
 
     function showTask() {
-        jQuery.getJSON('@routes.Application.getTask.absoluteURL', function(data) {
+        jQuery.getJSON('ATHIERHINroutes.Application.getTask.absoluteURL', function(data) {
             task = data;
             lazyGetTemplate(task.taskset).done(function() {
                 var html = jQuery.templates(task._id).render(task);

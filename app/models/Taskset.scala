@@ -7,7 +7,6 @@ import play.api.data.Forms._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
-import reactivemongo.extensions.json.dao.JsonDao
 
 case class Taskset(
                     _id: UUID,
@@ -19,7 +18,7 @@ case class Taskset(
                     objectEndpoint: String,
                     subjectAttributeQueries: Option[List[String]],
                     objectAttributeQueries: Option[List[String]]
-                  )
+                  ) extends MongoEntity
 
 object Taskset {
 
@@ -39,11 +38,4 @@ object Taskset {
     )(Taskset.apply)(Taskset.unapply)
   )
 }
-
-import play.api.Play.current
-
-object TasksetDao extends JsonDao[Taskset, UUID](current.injector.instanceOf[ReactiveMongoApi].db, "tasksets") {
-  def findByIdString(idString: String) = findById(UUID.fromString(idString))
-}
-
 
