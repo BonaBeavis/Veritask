@@ -6,7 +6,7 @@ import javax.inject.{Inject, Singleton}
 
 import config.ConfigBanana
 import models.Taskset.tasksetForm
-import models._
+import models.{Task, _}
 import org.apache.commons.codec.digest.DigestUtils
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -39,23 +39,17 @@ class Tasksets @Inject()(
     (Action andThen TasksetAction(tasksetId)).async(parse.multipartFormData) { request =>
       request.body.file("linkset") match {
         case Some(linkset) => parseLinksetFile(linkset.ref.file) match {
-          case Success(links) => addLinks(links, request.taskset._id.toString) map {
-            case Success(numTasksAdded) => Created("Created " + numTasksAdded + " Tasks")
-            case Failure(failure) => BadRequest(failure.getMessage)
-          }
+          case Success(links) =>
+            val tasks = links map(link => new Task(UUID.randomUUID(), UUID.fromString(tasksetId), link._id))
+            for {
+              linkS <- Future.sequence(links.map(linkRepo.save))
+              taskS <- Future.sequence(tasks.map(taskRepo.save))
+            } yield Ok(taskS.size + " Tasks upserted" + linkS.size + " Links upserted" )
           case Failure(failure) => Future.successful(BadRequest("File could not be parsed"))
         }
         case None => Future.successful(BadRequest("No RDF file"))
       }
     }
-
-  def addLinks(links: Iterable[Link], tasksetId: String): Future[Try[Int]] = {
-    val tasks = links map(link => new Task(UUID.randomUUID(), UUID.fromString(tasksetId), link._id))
-    for {
-      numberLinks <-linkRepo.save(links.toStream)
-      numberTasks <-taskRepo.save(tasks.toStream)
-    } yield numberTasks
-  }
 
   def parseLinksetFile(linksetFile: java.io.File): Try[Iterable[Link]] = {
     import ops._
@@ -101,8 +95,7 @@ class Tasksets @Inject()(
     tasksetForm.bindFromRequest().fold(
       formWithErrors => Future.successful(BadRequest("Form validation failed")),
       taskset => tasksetRepo.save(taskset) map {
-        case Success(taskset) => Created("yo")
-        case Failure(ex) => Ok("crap")
+        case created: Taskset => Created("yo")
       }
     )
   }

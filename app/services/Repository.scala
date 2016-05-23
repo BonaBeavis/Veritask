@@ -16,9 +16,7 @@ import scala.util.Try
   */
 trait Repository[E] {
 
-  def save(entity: E)(implicit ec: ExecutionContext): Future[Try[E]]
-
-  def save(entities: Stream[E])(implicit ec: ExecutionContext): Future[Try[Int]]
+  def save(entity: E)(implicit ec: ExecutionContext): Future[E]
 
   def findById(id: UUID)(implicit ec: ExecutionContext): Future[Option[E]]
 
@@ -40,18 +38,10 @@ abstract class MongoRepository[E <: MongoEntity : OWrites : Reads] extends Repos
   /** Mongo collection deserializable to [E] */
   def collection(implicit ec: ExecutionContext): JSONCollection
 
-  def save(entity: E)(implicit ec: ExecutionContext): Future[Try[E]] = {
-    collection.insert(entity) map {
-      case success: WriteResult if success.ok => Try(entity)
+  def save(entity: E)(implicit ec: ExecutionContext): Future[E] = {
+    collection.update(selector = entity, update = entity, upsert = true) map {
+      case success: WriteResult if success.ok => entity
       case failure: WriteResult => throw new Exception(failure.message)
-    }
-  }
-
-  def save(entities: Stream[E])(implicit ec: ExecutionContext): Future[Try[Int]] = {
-    def e = entities.map(Json.toJson(_).as[JsObject]).toStream
-    collection.bulkInsert(e, ordered = true) map {
-      case success: MultiBulkWriteResult if success.ok => Try(success.n)
-      case failure: MultiBulkWriteResult => throw new Exception(failure.errmsg.get)
     }
   }
 
