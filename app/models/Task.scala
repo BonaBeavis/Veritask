@@ -9,20 +9,10 @@ import reactivemongo.api.indexes.{Index, IndexType}
 
 case class Task(_id: UUID,
                 taskset: UUID,
-                link: Link
-               )
+                link_id: UUID
+               ) extends MongoEntity
 
 object Task {
   implicit val userFormat = Json.format[Task]
 }
-
-import play.api.Play.current
-
-object TaskDao extends {
-//  override val autoIndexes = Seq(
-//    Index(Seq(
-//      "taskset" -> IndexType.Text
-//    ), unique = true, background = true)
-//  )
-} //with JsonDao[Task, UUID](current.injector.instanceOf[ReactiveMongoApi].db, "tasks")
 

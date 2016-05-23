@@ -2,7 +2,6 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
-import models.TaskDao
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.Jsonp
