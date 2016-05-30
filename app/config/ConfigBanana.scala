@@ -1,13 +1,17 @@
 package config
 
+import java.net.URL
+
 import org.w3.banana._
-import org.w3.banana.sesame._
+import org.w3.banana.jena._
+
+import scala.concurrent.Future
 
 /**
   * Created by beavis on 02.12.15.
   */
 trait ConfigBanana
-  extends SesameModule {
+  extends JenaModule {
   val foaf = FOAFPrefix[Rdf]
   val cert = CertPrefix[Rdf]
   val vt = VTPrefix[Rdf]

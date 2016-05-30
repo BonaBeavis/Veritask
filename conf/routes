@@ -14,6 +14,7 @@ GET         /tasksets/:id                                 @controllers.Tasksets.
 POST        /tasksets/:tasksetId/uploadLinksetFile        @controllers.Tasksets.uploadLinksetFile(tasksetId: String)
 POST        /tasksets                                     @controllers.Tasksets.postTaskset
 
+GET         /testquery                                    @controllers.Tasksets.testQuery
 
 # Widget
 GET         /javascriptRoutes                             @controllers.Application.javascriptRoutes

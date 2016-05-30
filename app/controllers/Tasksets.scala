@@ -1,6 +1,7 @@
 package controllers
 
 import java.io.FileReader
+import java.net.URL
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
@@ -40,11 +41,11 @@ class Tasksets @Inject()(
       request.body.file("linkset") match {
         case Some(linkset) => parseLinksetFile(linkset.ref.file) match {
           case Success(links) =>
-            val tasks = links map(link => new Task(UUID.randomUUID(), UUID.fromString(tasksetId), link._id))
+            val tasks = links.map(link => new Task(UUID.randomUUID(), UUID.fromString(tasksetId), link._id, Map("val" -> "key")))
             for {
               linkS <- Future.sequence(links.map(linkRepo.save))
               taskS <- Future.sequence(tasks.map(taskRepo.save))
-            } yield Ok(taskS.size + " Tasks upserted" + linkS.size + " Links upserted" )
+            } yield Ok(taskS.size + " Tasks upserted, " + linkS.size + " Links upserted" )
           case Failure(failure) => Future.successful(BadRequest("File could not be parsed"))
         }
         case None => Future.successful(BadRequest("No RDF file"))
@@ -53,7 +54,7 @@ class Tasksets @Inject()(
 
   def parseLinksetFile(linksetFile: java.io.File): Try[Iterable[Link]] = {
     import ops._
-    jsonldReader.read(new FileReader(linksetFile), "") map {
+    turtleReader.read(new FileReader(linksetFile), "") map {
       graph => graph.triples map (linkFromTriple(_))
     }
   }
@@ -61,9 +62,9 @@ class Tasksets @Inject()(
   def linkFromTriple(triple: Rdf#Triple): Link = {
     import ops._
     val (subject, predicate, objectt) = fromTriple(triple)
-    val s = subject.stringValue()
-    val p = predicate.stringValue()
-    val o = objectt.stringValue()
+    val s = subject.toString()
+    val p = predicate.toString()
+    val o = objectt.toString()
     val uuid = UUID.nameUUIDFromBytes((s + p + o).getBytes)
     Link(uuid, s, p, o)
   }
@@ -74,6 +75,39 @@ class Tasksets @Inject()(
         case Some(taskset) => Right(new TasksetRequest(taskset, input))
         case None => Left(NotFound)
       }
+  }
+
+  def queryAttributes(task: Task): Future[Task] = {
+    import ops._
+    import sparqlOps._
+    import sparqlHttp.sparqlEngineSyntax._
+
+    val endpoint = new URL("http://dbpedia.org/sparql/")
+    val queryString = s"""PREFIX ont: <http://dbpedia.org/ontology/>
+                          PREFIX dbr: <http://dbpedia.org/resource#>
+                          SELECT ?a ?attribute WHERE {
+                          <http://dbpedia.org/resource/Arctic_fox> ?a ?attribute
+                          } LIMIT 4
+                            """.stripMargin
+
+    val result = for {
+      query <- parseSelect(queryString)
+      solutions <- endpoint.executeSelect(query, Map())
+    } yield {
+      val solution = solutions.iterator.next
+      solution.vars.map(a => a -> solution.get(a).toString).toMap
+    }
+    result match {
+      case Success(attributes) => Future.successful(task.copy(subjectAttributes = attributes))
+      case Failure(t) => Future.failed(t)
+    }
+  }
+
+  def testQuery() = Action.async { request =>
+    for {
+      task <- taskRepo.findById()
+      newTask <- queryAttributes(task.get)
+    } yield Ok(Json.toJson(newTask))
   }
 
   //  def parseLinksetGraph(graph: Rdf#Graph, taskset: Taskset): Iterable[Task] = {

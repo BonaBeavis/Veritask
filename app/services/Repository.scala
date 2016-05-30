@@ -20,6 +20,8 @@ trait Repository[E] {
 
   def findById(id: UUID)(implicit ec: ExecutionContext): Future[Option[E]]
 
+  def findById()(implicit ec: ExecutionContext): Future[Option[E]]
+
   def findAll()(implicit ec: ExecutionContext): Future[Traversable[E]]
 //
 //  def delete(id: UUID)(implicit ec: ExecutionContext): Future[Try[UUID]]
@@ -47,6 +49,10 @@ abstract class MongoRepository[E <: MongoEntity : OWrites : Reads] extends Repos
 
   def findById(id: UUID)(implicit ec: ExecutionContext): Future[Option[E]] = {
     collection.find(Json.obj("_id" -> id.toString)).one[E]
+  }
+
+  def findById()(implicit ec: ExecutionContext): Future[Option[E]] = {
+    collection.find(Json.obj()).one[E]
   }
 
   def findAll()(implicit ec: ExecutionContext): Future[Traversable[E]] = {

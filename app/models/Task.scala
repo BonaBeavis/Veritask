@@ -9,10 +9,12 @@ import reactivemongo.api.indexes.{Index, IndexType}
 
 case class Task(_id: UUID,
                 taskset: UUID,
-                link_id: UUID
+                link_id: UUID,
+                subjectAttributes: Map[String, String] = Map(),
+                objectAttributes: Map[String, String] = Map()
                ) extends MongoEntity
 
 object Task {
-  implicit val userFormat = Json.format[Task]
+  implicit val taskFormat = Json.format[Task]
 }
 
