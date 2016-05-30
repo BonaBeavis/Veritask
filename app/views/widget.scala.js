@@ -96,13 +96,12 @@ var veritask = function() {
     }
 
     function showTask() {
-        jQuery.getJSON('ATHIERHINroutes.Application.getTask.absoluteURL', function(data) {
+        jQuery.getJSON('@routes.Tasksets.getTask.absoluteURL', function(data) {
             task = data;
-            lazyGetTemplate(task.taskset).done(function() {
-                var html = jQuery.templates(task._id).render(task);
-                jQuery('#example-widget-container').html(html);
-                jQuery('#example-widget-container').show();
-            });
+            var myTmpl = window.jsrender.templates("<label>Name:</label> {{:subjectAttributes.attribute}} <img src='{{:subjectAttributes.attribute}}' alt='some_text'>");
+            var html = myTmpl.render(task);
+            jQuery('#example-widget-container').html(html);
+            jQuery('#example-widget-container').show();
         });
     }
 

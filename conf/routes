@@ -14,14 +14,13 @@ GET         /tasksets/:id                                 @controllers.Tasksets.
 POST        /tasksets/:tasksetId/uploadLinksetFile        @controllers.Tasksets.uploadLinksetFile(tasksetId: String)
 POST        /tasksets                                     @controllers.Tasksets.postTaskset
 
-GET         /testquery                                    @controllers.Tasksets.testQuery
 
 # Widget
 GET         /javascriptRoutes                             @controllers.Application.javascriptRoutes
 GET         /template                                     @controllers.Application.template(callback: String)
 GET         /widget                                       @controllers.Application.widget
 GET         /widgetHTML                                   @controllers.Application.widgetHTML
-#GET         /getTask                                      @controllers.Application.getTask
+GET         /getTask                                      @controllers.Tasksets.getTask
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file                                 controllers.Assets.versioned(path="/public", file: Asset)
 

@@ -85,8 +85,8 @@ class Tasksets @Inject()(
     val endpoint = new URL("http://dbpedia.org/sparql/")
     val queryString = s"""PREFIX ont: <http://dbpedia.org/ontology/>
                           PREFIX dbr: <http://dbpedia.org/resource#>
-                          SELECT ?a ?attribute WHERE {
-                          <http://dbpedia.org/resource/Arctic_fox> ?a ?attribute
+                          SELECT ?attribute WHERE {
+                          <http://dbpedia.org/resource/Arctic_fox> ont:thumbnail ?attribute
                           } LIMIT 4
                             """.stripMargin
 
@@ -103,7 +103,7 @@ class Tasksets @Inject()(
     }
   }
 
-  def testQuery() = Action.async { request =>
+  def getTask = Action.async { request =>
     for {
       task <- taskRepo.findById()
       newTask <- queryAttributes(task.get)
