@@ -11,13 +11,11 @@ import play.modules.reactivemongo.ReactiveMongoApi
 case class Taskset(
                     _id: UUID,
                     name: String,
-                    subjectsTarget: String,
-                    linkPredicate: String,
-                    objectsTarget: String,
                     subjectEndpoint: String,
                     objectEndpoint: String,
-                    subjectAttributeQueries: Option[List[String]],
-                    objectAttributeQueries: Option[List[String]]
+                    subjectAttributesQuery: String,
+                    objectAttributesQuery: String,
+                    template: String
                   ) extends MongoEntity
 
 object Taskset {
@@ -28,13 +26,11 @@ object Taskset {
     mapping(
       "_id" -> default(uuid, UUID.randomUUID()),
       "name" -> text,
-      "subjectsTarget" -> text,
-      "linkPredicate" -> text,
-      "objectsTarget" -> text,
       "subjectEndpoint" -> text,
       "objectEndpoint" -> text,
-      "subjectAttributeQueries" -> optional(list(text)),
-      "objectAttributeQueries" -> optional(list(text))
+      "subjectAttributesQuery" -> text,
+      "objectAttributesQuery" -> text,
+      "template" -> text
     )(Taskset.apply)(Taskset.unapply)
   )
 }
