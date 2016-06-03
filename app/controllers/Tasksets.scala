@@ -8,16 +8,10 @@ import javax.inject.{Inject, Singleton}
 import config.ConfigBanana
 import models.Taskset.tasksetForm
 import models.{Task, _}
-import org.apache.commons.codec.digest.DigestUtils
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
 import play.api.mvc._
-import play.modules.reactivemongo._
-import play.modules.reactivemongo.json._
-import play.modules.reactivemongo.json.collection._
-import reactivemongo.api.Cursor
-import reactivemongo.api.commands.WriteResult
 import services.{LinkMongoRepo, TaskMongoRepo, TasksetMongoRepo}
 
 import scala.concurrent.Future
@@ -35,6 +29,39 @@ class Tasksets @Inject()(
     with I18nSupport
     with ConfigBanana {
 
+  def TasksetAction(id: String) = new ActionRefiner[Request, TasksetRequest] {
+    def refine[A](input: Request[A]) =
+      tasksetRepo.findById(UUID.fromString(id)) map {
+        case Some(taskset) => Right(new TasksetRequest(taskset, input))
+        case None => Left(NotFound)
+      }
+  }
+
+  def listTasksetsView = Action.async {
+    tasksetRepo.findAll() map {
+      case tasksets: List[Taskset] => Ok(views.html.tasksets(tasksets))
+      case _ => InternalServerError("Could not get Tasksets")
+    }
+  }
+
+  def tasksetView = Action {
+    Ok(views.html.createTasksetForm(tasksetForm))
+  }
+
+  def updateTasksetView(id: String) =
+    (Action andThen TasksetAction(id)) { request =>
+    Ok(views.html.createTasksetForm(tasksetForm.fillAndValidate(request.taskset)))
+  }
+
+  def saveTaskset(id: String) = Action.async { implicit request =>
+    val newId = if (id.isEmpty) UUID.randomUUID() else UUID.fromString(id)
+    tasksetForm.bindFromRequest().fold(
+      formWithErrors => Future.successful(BadRequest("Form validation failed")),
+      taskset => tasksetRepo.save(taskset.copy(_id = newId)) map {
+        case created: Taskset => Redirect(routes.Tasksets.listTasksetsView())
+      }
+    )
+  }
 
   def uploadLinksetFile(tasksetId: String) =
     (Action andThen TasksetAction(tasksetId)).async(parse.multipartFormData) { request =>
@@ -67,14 +94,6 @@ class Tasksets @Inject()(
     val o = objectt.toString()
     val uuid = UUID.nameUUIDFromBytes((s + p + o).getBytes)
     Link(uuid, s, p, o)
-  }
-
-  def TasksetAction(id: String) = new ActionRefiner[Request, TasksetRequest] {
-    def refine[A](input: Request[A]) =
-      tasksetRepo.findById(UUID.fromString(id)) map {
-        case Some(taskset) => Right(new TasksetRequest(taskset, input))
-        case None => Left(NotFound)
-      }
   }
 
   def queryAttributes(task: Task): Future[Task] = {
@@ -110,58 +129,4 @@ class Tasksets @Inject()(
     } yield Ok(Json.toJson(newTask))
   }
 
-  //  def parseLinksetGraph(graph: Rdf#Graph, taskset: Taskset): Iterable[Task] = {
-  //    import ops._
-  //    graph.triples.map {
-  //      x => taskFromTriple(x, taskset)
-  //    }
-  //  }
-
-  //  def isTripleInTaskset(triple: List[Rdf#URI], taskset: Taskset): Boolean = {
-  //    import ops._
-  //    import recordBinder._
-  //    foldNode[String](triple.getSubject)(_)
-  //    triple.getPredicate.getString == taskset.linkPredicate &&
-  //    triple.getObject.toUri.fragmentLess.getString == taskset.objectsTarget
-  //  }
-
-  def postTaskset = Action.async { implicit request =>
-    tasksetForm.bindFromRequest().fold(
-      formWithErrors => Future.successful(BadRequest("Form validation failed")),
-      taskset => tasksetRepo.save(taskset) map {
-        case created: Taskset => Created("yo")
-      }
-    )
-  }
-
-  def createTaskset = Action {
-    Ok(views.html.taskset(tasksetForm))
-  }
-
-  def viewTaskset(id: String) = Action.async {
-    tasksetRepo.findById(UUID.fromString(id)) map {
-      case Some(taskset) => Ok(views.html.taskset(tasksetForm.fillAndValidate(taskset)))
-      case None => NoContent
-    }
-  }
-
-  def listTasksets = Action.async {
-    tasksetRepo.findAll() map {
-      case tasksets: List[Taskset] => Ok(views.html.tasksets(tasksets))
-      case _ => InternalServerError("Could not get Tasksets")
-    }
-  }
-
-//  def geTasksetNames: Future[List[String]] = {
-//    val cursor: Cursor[Taskset] = collection.
-//      find(Json.obj("active" -> true)).
-//      cursor[Taskset]()
-//    cursor.collect[List]() map {
-//      _ map {
-//        _.name
-//      }
-//    }
-//  }
-
-  //def collection: JSONCollection = db.collection[JSONCollection]("Tasksets")
 }

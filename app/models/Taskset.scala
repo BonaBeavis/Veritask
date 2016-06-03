@@ -4,9 +4,7 @@ import java.util.UUID
 
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
-import play.modules.reactivemongo.ReactiveMongoApi
 
 case class Taskset(
                     _id: UUID,

@@ -41,7 +41,7 @@ abstract class MongoRepository[E <: MongoEntity : OWrites : Reads] extends Repos
   def collection(implicit ec: ExecutionContext): JSONCollection
 
   def save(entity: E)(implicit ec: ExecutionContext): Future[E] = {
-    collection.update(selector = entity, update = entity, upsert = true) map {
+    collection.update(selector = Json.obj("_id" -> entity._id), update = entity, upsert = true) map {
       case success: WriteResult if success.ok => entity
       case failure: WriteResult => throw new Exception(failure.message)
     }

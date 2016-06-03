@@ -2,9 +2,9 @@
 
 @main("") {
     <div class="list-group">
-        <a href='@routes.Tasksets.createTaskset' class="list-group-item">Create New</a>
+        <a href='@routes.Tasksets.tasksetView' class="list-group-item">Create New</a>
     @for(taskset <- tasksets) {
-        <a href='@routes.Tasksets.viewTaskset(taskset._id.toString)' class="list-group-item">@taskset.name</a>
+        <a href='@routes.Tasksets.updateTasksetView(taskset._id.toString)' class="list-group-item">@taskset.name</a>
     }
     </div>
 }

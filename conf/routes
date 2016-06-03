@@ -7,12 +7,12 @@
 # Frontend
 GET         /                                             @controllers.Application.index
 
-GET         /tasksets                                     @controllers.Tasksets.listTasksets
-GET         /taskset                                      @controllers.Tasksets.createTaskset
-GET         /tasksets/:id                                 @controllers.Tasksets.viewTaskset(id: String)
+GET         /taskset                                      @controllers.Tasksets.tasksetView
 
-POST        /tasksets/:tasksetId/uploadLinksetFile        @controllers.Tasksets.uploadLinksetFile(tasksetId: String)
-POST        /tasksets                                     @controllers.Tasksets.postTaskset
+GET         /tasksets                                     @controllers.Tasksets.listTasksetsView
+GET         /tasksets/:id                                 @controllers.Tasksets.updateTasksetView(id: String)
+POST        /tasksets/:id                                 @controllers.Tasksets.saveTaskset(id: String)
+POST        /tasksets/:id/uploadLinks                     @controllers.Tasksets.uploadLinksetFile(id: String)
 
 
 # Widget
