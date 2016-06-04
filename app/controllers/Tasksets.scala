@@ -96,12 +96,8 @@ class Tasksets @Inject()(
     Link(uuid, s, p, o)
   }
 
-  def queryAttributes(task: Task): Future[Task] = {
-    import ops._
-    import sparqlOps._
-    import sparqlHttp.sparqlEngineSyntax._
+  def queryTaskAttributes(task: Task): Future[Task] = {
 
-    val endpoint = new URL("http://dbpedia.org/sparql/")
     val queryString = s"""PREFIX ont: <http://dbpedia.org/ontology/>
                           PREFIX dbr: <http://dbpedia.org/resource#>
                           SELECT ?attribute WHERE {
@@ -109,7 +105,24 @@ class Tasksets @Inject()(
                           } LIMIT 4
                             """.stripMargin
 
-    val result = for {
+    val taskset = tasksetRepo.findById(task.taskset) flatMap {
+        case Some(ts) => Future.successful(ts)
+        case None => Future.failed(new Exception("Database corrupt"))
+      }
+
+   for {
+      taskset <- taskset
+      subAttributes <- queryAttributes(new URL(taskset.subjectEndpoint), taskset.subjectAttributesQuery)
+      objAttributes <- queryAttributes(new URL(taskset.objectEndpoint), queryString)
+    } yield task.copy(subjectAttributes = subAttributes, objectAttributes = objAttributes)
+  }
+
+  def queryAttributes(endpoint: URL, queryString: String): Future[Map[String, String]] = {
+    import ops._
+    import sparqlOps._
+    import sparqlHttp.sparqlEngineSyntax._
+
+     val result = for {
       query <- parseSelect(queryString)
       solutions <- endpoint.executeSelect(query, Map())
     } yield {
@@ -117,15 +130,19 @@ class Tasksets @Inject()(
       solution.vars.map(a => a -> solution.get(a).toString).toMap
     }
     result match {
-      case Success(attributes) => Future.successful(task.copy(subjectAttributes = attributes))
+      case Success(attributes) => Future.successful(attributes)
       case Failure(t) => Future.failed(t)
     }
+  }
+
+  def selectTask(): Future[Task] = {
+    taskRepo.findById().map(_.get)
   }
 
   def getTask = Action.async { request =>
     for {
       task <- taskRepo.findById()
-      newTask <- queryAttributes(task.get)
+      newTask <- queryTaskAttributes(task.get)
     } yield Ok(Json.toJson(newTask))
   }
 

@@ -1,9 +1,10 @@
+@import java.util.UUID
 @(tasksetForm: Form[Taskset])(implicit messages: Messages)
 
 @import b3.vertical.fieldConstructor
 
 @main("Create Taskset") {
-    @b3.form(routes.Tasksets.saveTaskset(tasksetForm("_id").value.get)) {
+    @b3.form(routes.Tasksets.saveTaskset(tasksetForm("_id").value.getOrElse(UUID.randomUUID().toString))) {
         @b3.text(tasksetForm("name"), '_label -> "Name")
         @b3.url(tasksetForm("subjectEndpoint"), '_label -> "Subject Endpoint")
         @b3.url(tasksetForm("objectEndpoint"), '_label -> "Object Endpoint")
