@@ -28,7 +28,18 @@ var veritask = function() {
 
     /******** Our main function ********/
     function main() {
+
         jQuery(document).ready(function ($) {
+            
+
+            /******* Load CSS *******/
+            var css_link = $("<link>", {
+                rel: "stylesheet",
+                type: "text/css",
+                href: '@routes.Assets.versioned("lib/bootstrap/css/bootstrap.css").absoluteURL'
+            });
+            css_link.appendTo('head');
+
             jQuery('#example-widget-container').hide();
             jQuery.get('@routes.Application.widgetHTML.absoluteURL', function (data) {
                 jQuery('#example-widget-container').append(data);
@@ -73,16 +84,27 @@ var veritask = function() {
         //get stuff
         //show stuff
         jQuery.getJSON('@routes.Tasksets.getTask.absoluteURL', function(data) {
-            task = data;
-            var myTmpl = window.jsrender.templates("<label>Name:</label> {{:subjectAttributes.attribute}} <img src='{{:subjectAttributes.attribute}}' alt='some_text'>");
-            var html = myTmpl.render(task);
-            jQuery('#example-widget-container').html(html);
+            var myTmpl = window.jsrender.templates(data.template);
+            var html = myTmpl.render(data.task);
+            jQuery('#vt-yes').click(function() {postVerification("yes", data.task)});
+            jQuery('#vt-no').click(function() {postVerification("no", data.task)});
+            jQuery('#vt-maybe').click(function() {postVerification("maybe", data.task)});
+            jQuery('#vt-template').html(html);
             jQuery('#example-widget-container').show();
         });
     }
 
     function commitVerification() {
 
+    }
+
+    function postVerification(answer, task) {
+        var verification = { verifier: "Horst", task: task._id, result: answer };
+        jQuery.post('@routes.Tasksets.postVerification.absoluteURL', function(data) {
+            console.log(data);
+            jQuery('#vt-template').html(data);
+            jQuery('#vt-template').show();
+        }, 'json');
     }
 
     return {

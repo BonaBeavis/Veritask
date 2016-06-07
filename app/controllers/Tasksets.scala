@@ -96,28 +96,33 @@ class Tasksets @Inject()(
     Link(uuid, s, p, o)
   }
 
-  def queryTaskAttributes(task: Task): Future[Task] = {
-
-    val queryString = s"""PREFIX ont: <http://dbpedia.org/ontology/>
-                          PREFIX dbr: <http://dbpedia.org/resource#>
-                          SELECT ?attribute WHERE {
-                          <http://dbpedia.org/resource/Arctic_fox> ont:thumbnail ?attribute
-                          } LIMIT 4
-                            """.stripMargin
+  def updateTaskAttributes(task: Task): Future[Task] = {
 
     val taskset = tasksetRepo.findById(task.taskset) flatMap {
-        case Some(ts) => Future.successful(ts)
-        case None => Future.failed(new Exception("Database corrupt"))
-      }
+      case Some(ts) => Future.successful(ts)
+      case None => Future.failed(new Exception("Database corrupt"))
+    }
 
-   for {
+    val link = linkRepo.findById(task.link_id) flatMap {
+      case Some(l) => Future.successful(l)
+      case None => Future.failed(new Exception("Database corrupt"))
+    }
+
+    for {
       taskset <- taskset
-      subAttributes <- queryAttributes(new URL(taskset.subjectEndpoint), taskset.subjectAttributesQuery)
-      objAttributes <- queryAttributes(new URL(taskset.objectEndpoint), queryString)
-    } yield task.copy(subjectAttributes = subAttributes, objectAttributes = objAttributes)
+      link <- link
+      subQueryString = taskset.subjectAttributesQuery.replaceAll(
+        "\\{\\{\\s*linkSubject\\s*\\}\\}", "<" + link.linkSubject + ">")
+      objQueryString = taskset.objectAttributesQuery.replaceAll(
+        "\\{\\{\\s*linkObject\\s*\\}\\}", "<" + link.linkSubject + ">")
+      subAttributes <- queryAttribute(new URL(taskset.subjectEndpoint), subQueryString)
+      objAttributes <- queryAttribute(new URL(taskset.objectEndpoint), objQueryString)
+      updatedTask = task.copy(subjectAttributes = subAttributes, objectAttributes = objAttributes)
+      savedTask <- taskRepo.save(updatedTask)
+    } yield savedTask
   }
 
-  def queryAttributes(endpoint: URL, queryString: String): Future[Map[String, String]] = {
+  def queryAttribute(endpoint: URL, queryString: String): Future[Map[String, String]] = {
     import ops._
     import sparqlOps._
     import sparqlHttp.sparqlEngineSyntax._
@@ -140,10 +145,16 @@ class Tasksets @Inject()(
   }
 
   def getTask = Action.async { request =>
+
     for {
       task <- taskRepo.findById()
-      newTask <- queryTaskAttributes(task.get)
-    } yield Ok(Json.toJson(newTask))
+      taskset <- tasksetRepo.findById(task.get.taskset)
+      newTask <- updateTaskAttributes(task.get)
+      json = Json.obj("task" -> Json.toJson(task), "template" -> JsString(taskset.get.template))
+    } yield Ok(Json.toJson(json))
   }
 
+  def postVerification() = Action {
+    Ok(Json.toJson("true"))
+  }
 }
