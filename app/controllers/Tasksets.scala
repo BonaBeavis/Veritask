@@ -12,7 +12,7 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
 import play.api.mvc._
-import services.{LinkMongoRepo, TaskMongoRepo, TasksetMongoRepo}
+import services._
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -24,6 +24,8 @@ class Tasksets @Inject()(
                           val tasksetRepo: TasksetMongoRepo,
                           val taskRepo: TaskMongoRepo,
                           val linkRepo: LinkMongoRepo,
+                          val verificationRepo: VerificationMongoRepo,
+                          val validator: SimpleValidator,
                           val messagesApi: MessagesApi)
   extends Controller
     with I18nSupport
@@ -154,7 +156,18 @@ class Tasksets @Inject()(
     } yield Ok(Json.toJson(json))
   }
 
-  def postVerification() = Action {
-    Ok(Json.toJson("true"))
+  def processVerificationPost() = Action.async(BodyParsers.parse.json) { request =>
+    val verification = request.body.validate[Verification]
+    verification.fold(
+      errors => {
+        Future(BadRequest(Json.obj("status" ->"KO", "message" -> JsError.toJson(errors))))
+      },
+      verification => {
+        for {
+          verification <- verificationRepo.save(verification)
+          validation <- validator.validate(verification)
+        } yield Ok(Json.toJson(validation.toString))
+      }
+    )
   }
 }

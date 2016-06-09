@@ -3,6 +3,7 @@
 var veritask = function() {
 
     loadDependency('@routes.Assets.versioned("lib/jsrender/jsrender.js").absoluteURL');
+    loadDependency('@routes.Assets.versioned("lib/node-uuid/uuid.js").absoluteURL');
 
     var jQuery;
     if (window.jQuery === undefined || window.jQuery.fn.jquery !== '2.1.4') {
@@ -86,9 +87,9 @@ var veritask = function() {
         jQuery.getJSON('@routes.Tasksets.getTask.absoluteURL', function(data) {
             var myTmpl = window.jsrender.templates(data.template);
             var html = myTmpl.render(data.task);
-            jQuery('#vt-yes').click(function() {postVerification("yes", data.task)});
-            jQuery('#vt-no').click(function() {postVerification("no", data.task)});
-            jQuery('#vt-maybe').click(function() {postVerification("maybe", data.task)});
+            jQuery('#vt-yes').click(function() {postVerification(true, data.task)});
+            jQuery('#vt-no').click(function() {postVerification(false, data.task)});
+            jQuery('#vt-unsure').click(function() {postVerification(null, data.task)});
             jQuery('#vt-template').html(html);
             jQuery('#example-widget-container').show();
         });
@@ -99,12 +100,19 @@ var veritask = function() {
     }
 
     function postVerification(answer, task) {
-        var verification = { verifier: "Horst", task: task._id, result: answer };
-        jQuery.post('@routes.Tasksets.postVerification.absoluteURL', function(data) {
-            console.log(data);
-            jQuery('#vt-template').html(data);
-            jQuery('#vt-template').show();
-        }, 'json');
+        var verification = { _id: uuid.v1(), verifier: uuid.v1(), task_id: task._id, value: answer };
+        jQuery.ajax({
+            url:'@routes.Tasksets.processVerificationPost.absoluteURL',
+            method:"POST",
+            data: JSON.stringify(verification),
+            contentType:"application/json; charset=utf-8",
+            dataType:"json",
+            success: function(data) {
+                console.log(data);
+                jQuery('#vt-template').html(data);
+                jQuery('#vt-template').show();
+            }
+        })
     }
 
     return {

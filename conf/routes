@@ -21,7 +21,8 @@ GET         /template                                     @controllers.Applicati
 GET         /widget                                       @controllers.Application.widget
 GET         /widgetHTML                                   @controllers.Application.widgetHTML
 GET         /getTask                                      @controllers.Tasksets.getTask
-POST        /verification                                 @controllers.Tasksets.postVerification
+POST        /verification                                 @controllers.Tasksets.processVerificationPost
+
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file                                 controllers.Assets.versioned(path="/public", file: Asset)
 

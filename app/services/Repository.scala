@@ -2,7 +2,7 @@ package services
 
 import java.util.UUID
 
-import models.{Link, MongoEntity, Task, Taskset}
+import models._
 
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.libs.json._
@@ -21,6 +21,8 @@ trait Repository[E] {
   def findById(id: UUID)(implicit ec: ExecutionContext): Future[Option[E]]
 
   def findById()(implicit ec: ExecutionContext): Future[Option[E]]
+
+  def findByForeignKey(foreignKeyName: String, foreignKeyValue: UUID)(implicit ec: ExecutionContext): Future[Traversable[E]]
 
   def findAll()(implicit ec: ExecutionContext): Future[Traversable[E]]
 //
@@ -55,6 +57,11 @@ abstract class MongoRepository[E <: MongoEntity : OWrites : Reads] extends Repos
     collection.find(Json.obj()).one[E]
   }
 
+  def findByForeignKey( name: String, value: UUID
+                      )(implicit ec: ExecutionContext): Future[Traversable[E]] = {
+    collection.find(Json.obj(name -> value.toString)).cursor[E]().collect[List]()
+  }
+
   def findAll()(implicit ec: ExecutionContext): Future[Traversable[E]] = {
     collection.find(Json.obj()).cursor[E]().collect[List]()
   }
@@ -82,4 +89,14 @@ class TaskMongoRepo extends MongoRepository[Task] {
 class LinkMongoRepo extends MongoRepository[Link] {
   lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
   override def collection(implicit ec: ExecutionContext): JSONCollection = reactiveMongoApi.db.collection[JSONCollection]("links")
+}
+
+class VerificationMongoRepo extends MongoRepository[Verification] {
+  lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
+  override def collection(implicit ec: ExecutionContext): JSONCollection = reactiveMongoApi.db.collection[JSONCollection]("verification")
+}
+
+class SimpleValidatorStatsRepo extends MongoRepository[SimpleValidatorStats] {
+  lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
+  override def collection(implicit ec: ExecutionContext): JSONCollection = reactiveMongoApi.db.collection[JSONCollection]("simpleValidatorStats")
 }

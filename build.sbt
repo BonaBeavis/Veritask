@@ -22,6 +22,7 @@ UglifyKeys.uglifyOps := { js =>
 
 resolvers += "bblfish-snapshots" at "http://bblfish.net/work/repo/snapshots/"
 resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
+resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases"
 resolvers += "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 
@@ -31,14 +32,15 @@ libraryDependencies ++= Seq(
   "org.reactivemongo" %% "play2-reactivemongo" % "0.11.11-play24",
   "com.adrianhurt" %% "play-bootstrap" % "1.0-P24-B3",
   "org.mockito" % "mockito-core" % "1.10.19" % "test",
-  "org.webjars.bower" % "jsrender" % "1.0.0-rc.70"
+  "org.webjars.bower" % "jsrender" % "1.0.0-rc.70",
+  "org.webjars" % "node-uuid" % "1.4.7"
 )
 
 libraryDependencies += filters
 libraryDependencies += specs2 % Test
 libraryDependencies += "org.w3" %% "banana-jena" % "0.8.2-SNAPSHOT" //"0.8.1"
 libraryDependencies += "org.w3" %% "banana-sesame" % "0.8.2-SNAPSHOT" //"0.8.1"
-
+libraryDependencies += "io.megl" %% "play-json-extra" % "2.4.3"
 //updateOptions := updateOptions.value.withCachedResolution(true)
 
 //fork in run := true
