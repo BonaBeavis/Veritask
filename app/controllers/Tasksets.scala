@@ -12,6 +12,7 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
 import play.api.mvc._
+import play.api.libs.ws._
 import services._
 
 import scala.concurrent.Future
@@ -26,8 +27,9 @@ class Tasksets @Inject()(
                           val linkRepo: LinkMongoRepo,
                           val verificationRepo: VerificationMongoRepo,
                           val validator: SimpleValidator,
-                          val messagesApi: MessagesApi)
-  extends Controller
+                          val messagesApi: MessagesApi,
+                          val ws: WSClient
+) extends Controller
     with I18nSupport
     with ConfigBanana {
 
@@ -172,18 +174,26 @@ class Tasksets @Inject()(
   }
 
   def dumpVerification = Action.async {
+
+    val request: WSRequest = ws.url("http://localhost:3030/testo")
+
     import ops._
     import recordBinder._
-    for {
+    val test = for {
       verification <- verificationRepo.findById()
       task <- taskRepo.findById(verification.get.task_id)
       link <- linkRepo.findById(task.get.link_id)
-    } yield Ok(turtleWriter.asString(VerificationDump(
+    } yield turtleWriter.asString(VerificationDump(
       verification.get._id.toString,
       verification.get.verifier.toString,
       link.get.linkSubject,
       link.get.predicate,
       link.get.linkObject, Some(true)
-    ).toPG.graph,"").get)
+    ).toPG.graph,"").get
+
+    for {
+      test <-test
+      req <- request.withHeaders("Content-Type" -> "text/turtle").withMethod("POST").post(test)
+    } yield Ok(req.body + req.allHeaders)
   }
 }
