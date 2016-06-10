@@ -170,4 +170,20 @@ class Tasksets @Inject()(
       }
     )
   }
+
+  def dumpVerification = Action.async {
+    import ops._
+    import recordBinder._
+    for {
+      verification <- verificationRepo.findById()
+      task <- taskRepo.findById(verification.get.task_id)
+      link <- linkRepo.findById(task.get.link_id)
+    } yield Ok(turtleWriter.asString(VerificationDump(
+      verification.get._id.toString,
+      verification.get.verifier.toString,
+      link.get.linkSubject,
+      link.get.predicate,
+      link.get.linkObject, Some(true)
+    ).toPG.graph,"").get)
+  }
 }
