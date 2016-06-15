@@ -1,0 +1,8 @@
+mongo:
+  image: mongodb
+  network_mode: "host"
+
+fuseki:
+  image: stain/jena-fuseki
+  network_mode: "host"
+  ports: "3030:3030"
