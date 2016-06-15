@@ -41,9 +41,9 @@ var veritask = function() {
             });
             css_link.appendTo('head');
 
-            jQuery('#example-widget-container').hide();
+            jQuery('#veritask').hide();
             jQuery.get('@routes.Application.widgetHTML.absoluteURL', function (data) {
-                jQuery('#example-widget-container').append(data);
+                jQuery('#veritask').append(data);
             });
         });
     }
@@ -51,7 +51,7 @@ var veritask = function() {
     var task;
 
     function getTask() {
-        //jQuery('#example-widget-container').show();
+        //jQuery('#veritask').show();
         // jQuery.getJSON('ATHIERHINroutes.Application.getTask.absoluteURL', function(data) {
         //     task = data;
         // });
@@ -85,13 +85,13 @@ var veritask = function() {
         //get stuff
         //show stuff
         jQuery.getJSON('@routes.Tasksets.getTask.absoluteURL', function(data) {
-            var myTmpl = window.jsrender.templates(data.template);
+            var myTmpl = window.jQuery.templates(data.template);
             var html = myTmpl.render(data.task);
             jQuery('#vt-yes').click(function() {postVerification(true, data.task)});
             jQuery('#vt-no').click(function() {postVerification(false, data.task)});
             jQuery('#vt-unsure').click(function() {postVerification(null, data.task)});
             jQuery('#vt-template').html(html);
-            jQuery('#example-widget-container').show();
+            jQuery('#veritask').show();
         });
     }
 

@@ -21,17 +21,17 @@ import scala.util.{Failure, Success, Try}
 class TasksetRequest[A](val taskset: Taskset, request: Request[A]) extends WrappedRequest[A](request)
 
 @Singleton
-class Tasksets @Inject()(
-                          val tasksetRepo: TasksetMongoRepo,
-                          val taskRepo: TaskMongoRepo,
-                          val linkRepo: LinkMongoRepo,
-                          val verificationRepo: VerificationMongoRepo,
-                          val validator: SimpleValidator,
-                          val messagesApi: MessagesApi,
-                          val ws: WSClient
+class Tasksets @Inject() (
+  val tasksetRepo: TasksetMongoRepo,
+  val taskRepo: TaskMongoRepo,
+  val linkRepo: LinkMongoRepo,
+  val verificationRepo: VerificationMongoRepo,
+  val validator: SimpleValidator,
+  val messagesApi: MessagesApi,
+  val ws: WSClient
 ) extends Controller
-    with I18nSupport
-    with ConfigBanana {
+  with I18nSupport
+  with ConfigBanana {
 
   def TasksetAction(id: String) = new ActionRefiner[Request, TasksetRequest] {
     def refine[A](input: Request[A]) =
@@ -54,8 +54,8 @@ class Tasksets @Inject()(
 
   def updateTasksetView(id: String) =
     (Action andThen TasksetAction(id)) { request =>
-    Ok(views.html.createTasksetForm(tasksetForm.fillAndValidate(request.taskset)))
-  }
+      Ok(views.html.createTasksetForm(tasksetForm.fillAndValidate(request.taskset)))
+    }
 
   def saveTaskset(id: String) = Action.async { implicit request =>
     val newId = if (id.isEmpty) UUID.randomUUID() else UUID.fromString(id)
@@ -76,7 +76,7 @@ class Tasksets @Inject()(
             for {
               linkS <- Future.sequence(links.map(linkRepo.save))
               taskS <- Future.sequence(tasks.map(taskRepo.save))
-            } yield Ok(taskS.size + " Tasks upserted, " + linkS.size + " Links upserted" )
+            } yield Ok(taskS.size + " Tasks upserted, " + linkS.size + " Links upserted")
           case Failure(failure) => Future.successful(BadRequest("File could not be parsed"))
         }
         case None => Future.successful(BadRequest("No RDF file"))
@@ -116,9 +116,11 @@ class Tasksets @Inject()(
       taskset <- taskset
       link <- link
       subQueryString = taskset.subjectAttributesQuery.replaceAll(
-        "\\{\\{\\s*linkSubject\\s*\\}\\}", "<" + link.linkSubject + ">")
+        "\\{\\{\\s*linkSubject\\s*\\}\\}", "<" + link.linkSubject + ">"
+      )
       objQueryString = taskset.objectAttributesQuery.replaceAll(
-        "\\{\\{\\s*linkObject\\s*\\}\\}", "<" + link.linkSubject + ">")
+        "\\{\\{\\s*linkObject\\s*\\}\\}", "<" + link.linkSubject + ">"
+      )
       subAttributes <- queryAttribute(new URL(taskset.subjectEndpoint), subQueryString)
       objAttributes <- queryAttribute(new URL(taskset.objectEndpoint), objQueryString)
       updatedTask = task.copy(subjectAttributes = subAttributes, objectAttributes = objAttributes)
@@ -131,7 +133,7 @@ class Tasksets @Inject()(
     import sparqlOps._
     import sparqlHttp.sparqlEngineSyntax._
 
-     val result = for {
+    val result = for {
       query <- parseSelect(queryString)
       solutions <- endpoint.executeSelect(query, Map())
     } yield {
@@ -162,7 +164,7 @@ class Tasksets @Inject()(
     val verification = request.body.validate[Verification]
     verification.fold(
       errors => {
-        Future(BadRequest(Json.obj("status" ->"KO", "message" -> JsError.toJson(errors))))
+        Future(BadRequest(Json.obj("status" -> "KO", "message" -> JsError.toJson(errors))))
       },
       verification => {
         for {
@@ -189,11 +191,12 @@ class Tasksets @Inject()(
       link.get.linkSubject,
       link.get.predicate,
       link.get.linkObject, Some(true)
-    ).toPG.graph,"").get
+    ).toPG.graph, "").get
 
     for {
-      test <-test
+      test <- test
       req <- request.withHeaders("Content-Type" -> "text/turtle").withMethod("POST").post(test)
     } yield Ok(req.body + req.allHeaders)
   }
 }
+
