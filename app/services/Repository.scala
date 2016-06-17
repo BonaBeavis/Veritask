@@ -11,9 +11,6 @@ import reactivemongo.api.commands.{MultiBulkWriteResult, WriteResult}
 
 import scala.util.Try
 
-/**
-  * Generic async CRUD service trait
-  */
 trait Repository[E] {
 
   def save(entity: E)(implicit ec: ExecutionContext): Future[E]
@@ -22,18 +19,13 @@ trait Repository[E] {
 
   def findById()(implicit ec: ExecutionContext): Future[Option[E]]
 
-  def findByForeignKey(foreignKeyName: String, foreignKeyValue: UUID)(implicit ec: ExecutionContext): Future[Traversable[E]]
+  def search(key: String, value: String)(implicit ec: ExecutionContext): Future[Traversable[E]]
 
   def findAll()(implicit ec: ExecutionContext): Future[Traversable[E]]
 //
 //  def delete(id: UUID)(implicit ec: ExecutionContext): Future[Try[UUID]]
 }
 
-import reactivemongo.api._
-
-/**
-  * Abstract {{CRUDService}} impl backed by JSONCollection
-  */
 abstract class MongoRepository[E <: MongoEntity : OWrites : Reads] extends Repository[E] {
 
   import reactivemongo.play.json._
@@ -57,9 +49,9 @@ abstract class MongoRepository[E <: MongoEntity : OWrites : Reads] extends Repos
     collection.find(Json.obj()).one[E]
   }
 
-  def findByForeignKey( name: String, value: UUID
+  def search( name: String, value: String
                       )(implicit ec: ExecutionContext): Future[Traversable[E]] = {
-    collection.find(Json.obj(name -> value.toString)).cursor[E]().collect[List]()
+    collection.find(Json.obj(name -> value)).cursor[E]().collect[List]()
   }
 
   def findAll()(implicit ec: ExecutionContext): Future[Traversable[E]] = {
@@ -67,36 +59,35 @@ abstract class MongoRepository[E <: MongoEntity : OWrites : Reads] extends Repos
   }
 }
 
-import reactivemongo.play.json._
 import reactivemongo.play.json.collection._
-import reactivemongo.api.DB
-import reactivemongo.api._
-import scala.concurrent.Future
-
 import play.api.Play.current
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-class TasksetMongoRepo extends MongoRepository[Taskset] {
+class TasksetRepo extends MongoRepository[Taskset] {
   lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
   override def collection(implicit ec: ExecutionContext): JSONCollection = reactiveMongoApi.db.collection[JSONCollection]("tasksets")
 }
 
-class TaskMongoRepo extends MongoRepository[Task] {
+class TaskRepo extends MongoRepository[Task] {
   lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
   override def collection(implicit ec: ExecutionContext): JSONCollection = reactiveMongoApi.db.collection[JSONCollection]("tasks")
 }
 
-class LinkMongoRepo extends MongoRepository[Link] {
+class LinkRepo extends MongoRepository[Link] {
   lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
   override def collection(implicit ec: ExecutionContext): JSONCollection = reactiveMongoApi.db.collection[JSONCollection]("links")
 }
 
-class VerificationMongoRepo extends MongoRepository[Verification] {
+class VerificationRepo extends MongoRepository[Verification] {
   lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
-  override def collection(implicit ec: ExecutionContext): JSONCollection = reactiveMongoApi.db.collection[JSONCollection]("verification")
+  override def collection(implicit ec: ExecutionContext): JSONCollection = reactiveMongoApi.db.collection[JSONCollection]("verifications")
 }
 
 class SimpleValidatorStatsRepo extends MongoRepository[SimpleValidatorStats] {
   lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
   override def collection(implicit ec: ExecutionContext): JSONCollection = reactiveMongoApi.db.collection[JSONCollection]("simpleValidatorStats")
+}
+
+class UserRepo extends MongoRepository[User] {
+  lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
+  override def collection(implicit ec: ExecutionContext): JSONCollection = reactiveMongoApi.db.collection[JSONCollection]("users")
 }

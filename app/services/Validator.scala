@@ -24,7 +24,7 @@ class SimpleValidator @Inject()(val simpleValidatorStatsRepo: SimpleValidatorSta
   }
 
   def updateStats(verification: Verification): Future[SimpleValidatorStats] = {
-    val stats = simpleValidatorStatsRepo.findByForeignKey("task_id", verification.task_id) flatMap {
+    val stats = simpleValidatorStatsRepo.search("task_id", verification.task_id.toString) flatMap {
       case s: Traversable[SimpleValidatorStats] if s.size == 1 => Future.successful (s.head)
       case s: Traversable[SimpleValidatorStats] if s.isEmpty =>
         Future.successful (new SimpleValidatorStats (task_id = verification.task_id) )

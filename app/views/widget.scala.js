@@ -31,7 +31,7 @@ var veritask = function() {
     function main() {
 
         jQuery(document).ready(function ($) {
-            
+
 
             /******* Load CSS *******/
             var css_link = $("<link>", {
@@ -81,15 +81,19 @@ var veritask = function() {
     }
 
 
-    function challengeUser() {
-        //get stuff
-        //show stuff
-        jQuery.getJSON('@routes.Tasksets.getTask.absoluteURL', function(data) {
-            var myTmpl = window.jQuery.templates(data.template);
+    function challengeUser(user) {
+        jQuery.getJSON('@routes.Tasksets.getTask("").absoluteURL' + user, function(data) {
+            var templates;
+            if (window.jsrender == null) {
+                templates = window.jQuery.templates;
+            } else {
+                templates = window.jsrender.templates;
+            }
+            var myTmpl = templates(data.template);
             var html = myTmpl.render(data.task);
-            jQuery('#vt-yes').click(function() {postVerification(true, data.task)});
-            jQuery('#vt-no').click(function() {postVerification(false, data.task)});
-            jQuery('#vt-unsure').click(function() {postVerification(null, data.task)});
+            jQuery('#vt-yes').click(function() {postVerification(true, data)});
+            jQuery('#vt-no').click(function() {postVerification(false, data)});
+            jQuery('#vt-unsure').click(function() {postVerification(null, data)});
             jQuery('#vt-template').html(html);
             jQuery('#veritask').show();
         });
@@ -99,8 +103,8 @@ var veritask = function() {
 
     }
 
-    function postVerification(answer, task) {
-        var verification = { _id: uuid.v1(), verifier: uuid.v1(), task_id: task._id, value: answer };
+    function postVerification(answer, data) {
+        var verification = { _id: uuid.v1(), verifier: data.verifier, task_id: data.task._id, value: answer };
         jQuery.ajax({
             url:'@routes.Tasksets.processVerificationPost.absoluteURL',
             method:"POST",
@@ -116,6 +120,6 @@ var veritask = function() {
     }
 
     return {
-        showTask: challengeUser
+        challengeUser: challengeUser
     };
 }(); // We call our anonymous function immediately

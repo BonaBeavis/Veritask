@@ -39,8 +39,8 @@ libraryDependencies ++= Seq(
 libraryDependencies += filters
 libraryDependencies += ws
 libraryDependencies += specs2 % Test
-libraryDependencies += "org.w3" %% "banana-jena" % "0.8.2-SNAPSHOT" //"0.8.1"
-libraryDependencies += "org.w3" %% "banana-sesame" % "0.8.2-SNAPSHOT" //"0.8.1"
+libraryDependencies += "org.w3" %% "banana-jena" % "0.8.1" //"0.8.1"
+libraryDependencies += "org.w3" %% "banana-sesame" % "0.8.1" //"0.8.1"
 libraryDependencies += "io.megl" %% "play-json-extra" % "2.4.3"
 //updateOptions := updateOptions.value.withCachedResolution(true)
 

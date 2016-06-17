@@ -3,13 +3,12 @@ package models
 import java.util.UUID
 
 import config.ConfigBanana
+import org.w3.banana.{FOAFPrefix, XSDPrefix}
 import org.w3.banana.binder.PGBinder
 import play.api.libs.json.Json
+
 import scala.language.implicitConversions
 
-/**
-  * Created by beavis on 03.12.15.
-  */
 case class Verification(_id: UUID,
                         verifier: UUID,
                         task_id: UUID,
@@ -18,26 +17,7 @@ case class Verification(_id: UUID,
 
 object Verification extends ConfigBanana {
 
-  implicit def UUIDToString(id: UUID): String = id.toString
-  implicit def StringToUUID(id: String): UUID = UUID.fromString(id)
-
   implicit val verificationFormat = Json.format[Verification]
-
-//  import ops._
-//  import recordBinder._
-//  import org.w3.banana.syntax._
-//
-//  val clazz = URI("http://example.com/City#class")
-//  implicit val classUris = classUrisFor[Verification](clazz)
-//
-//  val verifier = property[String](foaf("veri"))
-//  val task_id = property[String](foaf("task"))
-//  val value = optional[Boolean](foaf("value"))
-//
-//  implicit val binder: PGBinder[Rdf, Verification] =
-//    pgbWithId[Verification](t => URI("http://example.com/" + t._id))
-//      .apply(verifier,task_id,value)(Verification.apply, Verification.unapply) withClasses classUris
-
 }
 
 case class VerificationDump(

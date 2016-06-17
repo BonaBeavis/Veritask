@@ -22,13 +22,14 @@ class TasksetRequest[A](val taskset: Taskset, request: Request[A]) extends Wrapp
 
 @Singleton
 class Tasksets @Inject() (
-  val tasksetRepo: TasksetMongoRepo,
-  val taskRepo: TaskMongoRepo,
-  val linkRepo: LinkMongoRepo,
-  val verificationRepo: VerificationMongoRepo,
-  val validator: SimpleValidator,
-  val messagesApi: MessagesApi,
-  val ws: WSClient
+                           val tasksetRepo: TasksetRepo,
+                           val taskRepo: TaskRepo,
+                           val linkRepo: LinkRepo,
+                           val userRepo: UserRepo,
+                           val verificationRepo: VerificationRepo,
+                           val validator: SimpleValidator,
+                           val messagesApi: MessagesApi,
+                           val ws: WSClient
 ) extends Controller
   with I18nSupport
   with ConfigBanana {
@@ -100,27 +101,15 @@ class Tasksets @Inject() (
     Link(uuid, s, p, o)
   }
 
-  def updateTaskAttributes(task: Task): Future[Task] = {
-
-    val taskset = tasksetRepo.findById(task.taskset) flatMap {
-      case Some(ts) => Future.successful(ts)
-      case None => Future.failed(new Exception("Database corrupt"))
-    }
-
-    val link = linkRepo.findById(task.link_id) flatMap {
-      case Some(l) => Future.successful(l)
-      case None => Future.failed(new Exception("Database corrupt"))
-    }
-
-    for {
-      taskset <- taskset
-      link <- link
-      subQueryString = taskset.subjectAttributesQuery.replaceAll(
+  def updateTaskAttributes(task: Task, taskset: Taskset, link: Link): Future[Task] = {
+      val subQueryString = taskset.subjectAttributesQuery.replaceAll(
         "\\{\\{\\s*linkSubject\\s*\\}\\}", "<" + link.linkSubject + ">"
       )
-      objQueryString = taskset.objectAttributesQuery.replaceAll(
+      val objQueryString = taskset.objectAttributesQuery.replaceAll(
         "\\{\\{\\s*linkObject\\s*\\}\\}", "<" + link.linkSubject + ">"
       )
+
+    for {
       subAttributes <- queryAttribute(new URL(taskset.subjectEndpoint), subQueryString)
       objAttributes <- queryAttribute(new URL(taskset.objectEndpoint), objQueryString)
       updatedTask = task.copy(subjectAttributes = subAttributes, objectAttributes = objAttributes)
@@ -147,16 +136,37 @@ class Tasksets @Inject() (
   }
 
   def selectTask(): Future[Task] = {
-    taskRepo.findById().map(_.get)
-  }
-
-  def getTask = Action.async { request =>
-
     for {
       task <- taskRepo.findById()
+      if task.nonEmpty
       taskset <- tasksetRepo.findById(task.get.taskset)
-      newTask <- updateTaskAttributes(task.get)
-      json = Json.obj("task" -> Json.toJson(task), "template" -> JsString(taskset.get.template))
+      link <- linkRepo.findById(task.get.link_id)
+      updatedTask <- updateTaskAttributes(task.get, taskset.get, link.get)
+      if taskset.nonEmpty && link.nonEmpty
+    } yield updatedTask
+  }
+
+  def getTask(name: String) = Action.async {
+
+    val user = userRepo.search("_id", name) flatMap {
+      case users: Traversable[User] if users.nonEmpty =>
+        Future.successful(users.head)
+      case _ => userRepo.save(User(UUID.randomUUID(), name))
+    }
+
+    for {
+      user <- user
+      task <- taskRepo.findById()
+      if task.nonEmpty
+      taskset <- tasksetRepo.findById(task.get.taskset)
+      link <- linkRepo.findById(task.get.link_id)
+      updatedTask <- updateTaskAttributes(task.get, taskset.get, link.get)
+      if taskset.nonEmpty && link.nonEmpty
+      json = Json.obj(
+        "verifier" -> user._id,
+        "task" -> Json.toJson(updatedTask),
+        "template" -> JsString(taskset.get.template)
+      )
     } yield Ok(Json.toJson(json))
   }
 
@@ -178,7 +188,6 @@ class Tasksets @Inject() (
   def dumpVerification = Action.async {
 
     val request: WSRequest = ws.url("http://localhost:3030/testo")
-
     import ops._
     import recordBinder._
     val test = for {
