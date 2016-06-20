@@ -2,6 +2,7 @@ package services
 
 import java.util.UUID
 
+import com.google.inject.Inject
 import models._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -28,6 +29,10 @@ trait Repository[E] {
 
 trait TaskRepository extends Repository[Task] {
   def selectTaskToVerify(implicit ec: ExecutionContext): Future[Task]
+}
+
+trait VerificationRepository extends Repository[Verification] {
+  def getLink(verification: Verification)(implicit ec: ExecutionContext): Future[Link]
 }
 
 abstract class MongoRepository[E <: MongoEntity : OWrites : Reads] extends Repository[E] {
@@ -93,9 +98,23 @@ class LinkRepo extends MongoRepository[Link] {
   override def col(implicit ec: ExecutionContext): JSONCollection = reactiveMongoApi.db.collection[JSONCollection]("links")
 }
 
-class VerificationRepo extends MongoRepository[Verification] {
+class VerificationRepo @Inject()(
+                                 val linkRepo: LinkRepo,
+                                 val taskRepo: TaskRepo
+                               )  extends MongoRepository[Verification] with VerificationRepository {
   lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
   override def col(implicit ec: ExecutionContext): JSONCollection = reactiveMongoApi.db.collection[JSONCollection]("verifications")
+
+  override def getLink(verification: Verification)(implicit ec: ExecutionContext): Future[Link] = {
+    val linkFuture = for {
+      task <- taskRepo.findById(verification.task_id)
+      link <- linkRepo.findById(task.get.link_id)
+    } yield link
+    linkFuture flatMap  {
+      case Some(l) => Future.successful(l)
+      case _ => Future.failed(new Exception("Database damaged"))
+    }
+  }
 }
 
 class SimpleValidatorStatsRepo extends MongoRepository[SimpleValidatorStats] {

@@ -179,32 +179,30 @@ class Tasksets @Inject() (
         for {
           verification <- verificationRepo.save(verification)
           validation <- validator.validate(verification)
+          verificationDump <- dumpVerification(verification)
         } yield Ok(Json.toJson(validation.toString))
       }
     )
   }
 
-  def dumpVerification = Action.async {
+  def dumpVerification(verification: Verification) =  {
 
     val request: WSRequest = ws.url("http://localhost:3030/testo")
     import ops._
     import recordBinder._
     val test = for {
-      verification <- verificationRepo.findById()
-      task <- taskRepo.findById(verification.get.task_id)
-      link <- linkRepo.findById(task.get.link_id)
+      link <- verificationRepo.getLink(verification)
     } yield turtleWriter.asString(VerificationDump(
-      verification.get._id.toString,
-      verification.get.verifier.toString,
-      link.get.linkSubject,
-      link.get.predicate,
-      link.get.linkObject, Some(true)
+      verification._id,
+      verification.verifier.toString,
+      link,
+      Some(true)
     ).toPG.graph, "").get
 
     for {
       test <- test
       req <- request.withHeaders("Content-Type" -> "text/turtle").withMethod("POST").post(test)
-    } yield Ok(req.body + req.allHeaders)
+    } yield req.body
   }
 }
 

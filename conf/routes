@@ -14,7 +14,6 @@ GET         /tasksets/:id                                 @controllers.Tasksets.
 POST        /tasksets/:id                                 @controllers.Tasksets.saveTaskset(id: String)
 POST        /tasksets/:id/uploadLinks                     @controllers.Tasksets.uploadLinksetFile(id: String)
 
-GET         /test                                         @controllers.Tasksets.dumpVerification
 
 # Widget
 GET         /javascriptRoutes                             @controllers.Application.javascriptRoutes

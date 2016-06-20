@@ -21,11 +21,9 @@ object Verification extends ConfigBanana {
 }
 
 case class VerificationDump(
-                          _id: String,
+                          _id: UUID,
                           verifier: String,
-                          linkSubject: String,
-                          predicate: String,
-                          linkObject: String,
+                          link: Link,
                           value: Option[Boolean]
                            )
 
@@ -38,16 +36,14 @@ object VerificationDump extends ConfigBanana {
     val clazz = URI("http://example.com/City#class")
     implicit val classUris = classUrisFor[VerificationDump](clazz)
 
-    val _id = property[String](foaf("id"))
-    val verifier = property[String](foaf("veri"))
-    val linkSubject = property[String](foaf("subject"))
-    val predicate = property[String](foaf("predi"))
-    val linkObject = property[String](foaf("obj"))
-    val value = optional[Boolean](foaf("val"))
+    val _id = property[UUID](foaf("id"))
+    val verifier = property[String](URI("http://purl.org/dc/terms/contributor"))
+    val link= property[Link](foaf("link"))
+    val value = optional[Boolean](foaf("value"))
 
     implicit val binder: PGBinder[Rdf, VerificationDump] =
       pgbWithId[VerificationDump](t => URI("http://example.com/" + t._id))
-        .apply(_id, verifier, linkSubject, predicate, linkObject, value)(VerificationDump.apply, VerificationDump.unapply) withClasses classUris
+        .apply(_id, verifier, link, value)(VerificationDump.apply, VerificationDump.unapply) withClasses classUris
 }
 
 //object UUID extends ConfigBanana{
