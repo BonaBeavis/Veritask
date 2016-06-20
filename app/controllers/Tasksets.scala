@@ -156,11 +156,10 @@ class Tasksets @Inject() (
 
     for {
       user <- user
-      task <- taskRepo.findById()
-      if task.nonEmpty
-      taskset <- tasksetRepo.findById(task.get.taskset)
-      link <- linkRepo.findById(task.get.link_id)
-      updatedTask <- updateTaskAttributes(task.get, taskset.get, link.get)
+      task <- taskRepo.selectTaskToVerify
+      taskset <- tasksetRepo.findById(task.taskset)
+      link <- linkRepo.findById(task.link_id)
+      updatedTask <- updateTaskAttributes(task, taskset.get, link.get)
       if taskset.nonEmpty && link.nonEmpty
       json = Json.obj(
         "verifier" -> user._id,

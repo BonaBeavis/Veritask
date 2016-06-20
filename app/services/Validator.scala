@@ -1,11 +1,8 @@
 package services
 
-import java.util.UUID
 
-import com.fasterxml.jackson.databind.node.BooleanNode
 import com.google.inject.Inject
 import models.{SimpleValidatorStats, Task, Verification}
-import play.api.libs.json.Json
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -17,18 +14,20 @@ trait Validator {
   def validate(verification: Verification): Future[Boolean]
 }
 
-class SimpleValidator @Inject()(val simpleValidatorStatsRepo: SimpleValidatorStatsRepo) {
+class SimpleValidator @Inject()(
+                                 val simpleValidatorStatsRepo: SimpleValidatorStatsRepo
+                               ) extends Validator {
 
-  def validate(verification: Verification): Future[Boolean] =  {
-   updateStats(verification).map(validation(_))
+  def validate(verification: Verification): Future[Boolean] = {
+    updateStats(verification).map(validation(_))
   }
 
   def updateStats(verification: Verification): Future[SimpleValidatorStats] = {
     val stats = simpleValidatorStatsRepo.search("task_id", verification.task_id.toString) flatMap {
-      case s: Traversable[SimpleValidatorStats] if s.size == 1 => Future.successful (s.head)
+      case s: Traversable[SimpleValidatorStats] if s.size == 1 => Future.successful(s.head)
       case s: Traversable[SimpleValidatorStats] if s.isEmpty =>
-        Future.successful (new SimpleValidatorStats (task_id = verification.task_id) )
-      case _ => Future.failed (new Throwable ("Database corrupt") )
+        Future.successful(new SimpleValidatorStats(task_id = verification.task_id))
+      case _ => Future.failed(new Throwable("Database corrupt"))
     }
     val updatedStats = verification.value match {
       case None => stats.map(x => x.copy(numNoValue = x.numNoValue + 1))
