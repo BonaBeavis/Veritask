@@ -146,28 +146,49 @@ class Tasksets @Inject() (
     } yield updatedTask
   }
 
-  def getTask(name: String) = Action.async {
-
-    val user = userRepo.search("_id", name) flatMap {
-      case users: Traversable[User] if users.nonEmpty =>
-        Future.successful(users.head)
-      case _ => userRepo.save(User(UUID.randomUUID(), name))
+  def getUser(name: String): Future[User] = {
+    userRepo.search("name", name) flatMap {
+      case users: Traversable[User] if users.nonEmpty => Future(users.head)
+      case _ => userRepo.save(User(
+        UUID.randomUUID(),
+        name,
+        scala.util.Random.nextInt(3),
+        List(System.currentTimeMillis())
+      ))
     }
-
-    for {
-      user <- user
-      task <- taskRepo.selectTaskToVerify
-      taskset <- tasksetRepo.findById(task.taskset)
-      link <- linkRepo.findById(task.link_id)
-      updatedTask <- updateTaskAttributes(task, taskset.get, link.get)
-      if taskset.nonEmpty && link.nonEmpty
-      json = Json.obj(
-        "verifier" -> user._id,
-        "task" -> Json.toJson(updatedTask),
-        "template" -> JsString(taskset.get.template)
-      )
-    } yield Ok(Json.toJson(json))
   }
+
+  def getTask(name: String) = Action.async {
+    getUser(name) flatMap {
+      case u:User if isTurn(u) =>
+        val userStamped = u.copy(timeStamps = System.currentTimeMillis() :: u.timeStamps)
+        for {
+          user <- userRepo.save(userStamped)
+          task <- taskRepo.selectTaskToVerify
+          taskset <- tasksetRepo.findById(task.taskset)
+          link <- linkRepo.findById(task.link_id)
+          updatedTask <- updateTaskAttributes(task, taskset.get, link.get)
+          if taskset.nonEmpty && link.nonEmpty
+          json = Json.obj(
+            "verifier" -> user._id,
+            "task" -> Json.toJson(updatedTask),
+            "template" -> JsString(taskset.get.template)
+          )
+        } yield Ok(Json.toJson(json))
+      case _ => Future(Ok(Json.toJson(JsNull)))
+    }
+  }
+
+
+  def isTurn(user: User): Boolean = {
+    val timeSinceLastRequest = System.currentTimeMillis() - user.timeStamps.head
+    user.group match {
+      case 0 => timeSinceLastRequest > 10000
+      case 1 => timeSinceLastRequest > 20000
+      case 2 => timeSinceLastRequest > 30000
+    }
+  }
+
 
   def processVerificationPost() = Action.async(BodyParsers.parse.json) { request =>
     val verification = request.body.validate[Verification]
@@ -176,10 +197,10 @@ class Tasksets @Inject() (
         Future(BadRequest(Json.obj("status" -> "KO", "message" -> JsError.toJson(errors))))
       },
       verification => {
+        dumpVerification(verification)
         for {
-          verification <- verificationRepo.save(verification)
-          validation <- validator.validate(verification)
-          verificationDump <- dumpVerification(verification)
+          veri <- verificationRepo.save(verification)
+          validation <- validator.validate(veri)
         } yield Ok(Json.toJson(validation.toString))
       }
     )
@@ -202,7 +223,7 @@ class Tasksets @Inject() (
     for {
       test <- test
       req <- request.withHeaders("Content-Type" -> "text/turtle").withMethod("POST").post(test)
-    } yield req.body
+    } yield "Done"
   }
 }
 

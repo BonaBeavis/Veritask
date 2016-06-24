@@ -8,8 +8,6 @@ import play.api.libs.Jsonp
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.api.routing.JavaScriptReverseRouter
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.twirl.api.Html
 
 /**
   * Instead of declaring an object of Application as per the template project, we must declare a class given that

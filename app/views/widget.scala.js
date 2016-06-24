@@ -48,59 +48,30 @@ var veritask = function() {
         });
     }
 
-    var task;
-
-    function getTask() {
-        //jQuery('#veritask').show();
-        // jQuery.getJSON('ATHIERHINroutes.Application.getTask.absoluteURL', function(data) {
-        //     task = data;
-        // });
-    }
-
-    function lazyGetTemplate(name) {
-        // If the named remote template is not yet loaded and compiled
-        // as a named template, fetch it. In either case, return a promise
-        // (already resolved, if the template has already been loaded)
-        var deferred = jQuery.Deferred();
-        if (jQuery.templates[name]) {
-            deferred.resolve();
-        } else {
-            jQuery.getScript(
-                    "//www.jsviews.com/samples/resources/templates/"
-                    + name + ".js")
-                .then(function() {
-                    if (jQuery.templates[name]) {
-                        deferred.resolve();
-                    } else {
-                        alert("Script: \"" + name + ".js\" failed to load");
-                        deferred.reject();
-                    }
-                });
-        }
-        return deferred.promise();
-    }
-
-
     function challengeUser(user) {
         jQuery.getJSON('@routes.Tasksets.getTask("").absoluteURL' + user, function(data) {
-            var templates;
-            if (window.jsrender == null) {
-                templates = window.jQuery.templates;
-            } else {
-                templates = window.jsrender.templates;
+            if (data !== null) {
+                var templates;
+                if (window.jsrender == null) {
+                    templates = window.jQuery.templates;
+                } else {
+                    templates = window.jsrender.templates;
+                }
+                var myTmpl = templates(data.template);
+                var html = myTmpl.render(data.task);
+                jQuery('#vt-yes').click(function () {
+                    postVerification(true, data)
+                });
+                jQuery('#vt-no').click(function () {
+                    postVerification(false, data)
+                });
+                jQuery('#vt-unsure').click(function () {
+                    postVerification(null, data)
+                });
+                jQuery('#vt-template').html(html);
+                jQuery('#veritask').show();
             }
-            var myTmpl = templates(data.template);
-            var html = myTmpl.render(data.task);
-            jQuery('#vt-yes').click(function() {postVerification(true, data)});
-            jQuery('#vt-no').click(function() {postVerification(false, data)});
-            jQuery('#vt-unsure').click(function() {postVerification(null, data)});
-            jQuery('#vt-template').html(html);
-            jQuery('#veritask').show();
         });
-    }
-
-    function commitVerification() {
-
     }
 
     function postVerification(answer, data) {
@@ -109,17 +80,18 @@ var veritask = function() {
             url:'@routes.Tasksets.processVerificationPost.absoluteURL',
             method:"POST",
             data: JSON.stringify(verification),
-            contentType:"application/json; charset=utf-8",
+            contentType:"application/json",
             dataType:"json",
             success: function(data) {
                 console.log(data);
                 jQuery('#vt-template').html(data);
                 jQuery('#vt-template').show();
+                jQuery('#veritask').hide();
             }
-        })
+        });
     }
 
     return {
-        challengeUser: challengeUser
+        challengeUser: challengeUser,
     };
 }(); // We call our anonymous function immediately
