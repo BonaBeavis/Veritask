@@ -6,17 +6,13 @@ scalaVersion := "2.11.7"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-pipelineStages := Seq(uglify, digest, gzip)
+pipelineStages := Seq(digest, gzip)
 
 pipelineStages in Assets := Seq()
 
 routesGenerator := InjectedRoutesGenerator
 
 DigestKeys.algorithms += "sha1"
-
-UglifyKeys.uglifyOps := { js =>
-  Seq((js.sortBy(_._2), "concat.min.js"))
-}
 
 resolvers += "bblfish-snapshots" at "http://bblfish.net/work/repo/snapshots/"
 resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
@@ -37,7 +33,7 @@ libraryDependencies ++= Seq(
 libraryDependencies += filters
 libraryDependencies += ws
 libraryDependencies += specs2 % Test
-libraryDependencies += "org.w3" %% "banana-jena" % "0.8.1" excludeAll(ExclusionRule(organization = "org.slf4j")) 
+libraryDependencies += "org.w3" %% "banana-jena" % "0.8.1" excludeAll(ExclusionRule(organization = "org.slf4j"))
 //updateOptions := updateOptions.value.withCachedResolution(true)
 
 //fork in run := true

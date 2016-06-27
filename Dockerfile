@@ -13,4 +13,5 @@ ENV PATH $PATH:/activator-${ACTIVATOR_VERSION}-minimal/bin
 RUN cd /home && git clone https://github.com/BonarBeavis/Veritask.git
 WORKDIR /home/Veritask
 RUN activator clean stage
-RUN sbt clean stage
+EXPOSE 9000
+CMD target/universal/stage/bin/veritask -Dplay.crypto.secret=abcdefghijk
