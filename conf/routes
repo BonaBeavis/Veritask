@@ -5,23 +5,23 @@
 # ~~~~
 
 # Frontend
-GET         /                                             @controllers.Application.index
+GET         /                                             controllers.Application.index
 
-GET         /taskset                                      @controllers.Tasksets.tasksetView
+GET         /taskset                                      controllers.Tasksets.tasksetView
 
-GET         /tasksets                                     @controllers.Tasksets.listTasksetsView
-GET         /tasksets/:id                                 @controllers.Tasksets.updateTasksetView(id: String)
-POST        /tasksets/:id                                 @controllers.Tasksets.saveTaskset(id: String)
-POST        /tasksets/:id/uploadLinks                     @controllers.Tasksets.uploadLinksetFile(id: String)
+GET         /tasksets                                     controllers.Tasksets.listTasksetsView
+GET         /tasksets/:id                                 controllers.Tasksets.updateTasksetView(id: String)
+POST        /tasksets/:id                                 controllers.Tasksets.saveTaskset(id: String)
+POST        /tasksets/:id/uploadLinks                     controllers.Tasksets.uploadLinksetFile(id: String)
 
 
 # Widget
-GET         /javascriptRoutes                             @controllers.Application.javascriptRoutes
-GET         /template                                     @controllers.Application.template(callback: String)
-GET         /widget                                       @controllers.Application.widget
-GET         /widgetHTML                                   @controllers.Application.widgetHTML
-GET         /getTask/:user                                @controllers.Tasksets.getTask(user: String)
-POST        /verification                                 @controllers.Tasksets.processVerificationPost
+GET         /javascriptRoutes                             controllers.Application.javascriptRoutes
+GET         /template                                     controllers.Application.template(callback: String)
+GET         /widget                                       controllers.Application.widget
+GET         /widgetHTML                                   controllers.Application.widgetHTML
+GET         /getTask/:user                                controllers.Tasksets.getTask(user: String)
+POST        /verification                                 controllers.Tasksets.processVerificationPost
 
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file                                 controllers.Assets.versioned(path="/public", file: Asset)

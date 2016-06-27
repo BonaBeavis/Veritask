@@ -73,8 +73,7 @@ import play.api.Play.current
 import reactivemongo.play.json._
 import reactivemongo.play.json.collection.JSONCollection
 
-class TasksetRepo extends MongoRepository[Taskset] {
-  lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
+class TasksetRepo @Inject() (val reactiveMongoApi: ReactiveMongoApi) extends MongoRepository[Taskset] {
   override def col(implicit ec: ExecutionContext): JSONCollection = reactiveMongoApi.db.collection[JSONCollection]("tasksets")
 }
 

@@ -1,4 +1,4 @@
-name := """Veritask"""
+name := "Veritask"
 
 version := "0.1-SNAPSHOT"
 
@@ -9,8 +9,6 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 pipelineStages := Seq(uglify, digest, gzip)
 
 pipelineStages in Assets := Seq()
-
-pipelineStages := Seq(uglify, digest, gzip)
 
 routesGenerator := InjectedRoutesGenerator
 
@@ -29,8 +27,8 @@ resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repos
 libraryDependencies ++= Seq(
   "com.google.inject" % "guice" % "4.0",
   "javax.inject" % "javax.inject" % "1",
-  "org.reactivemongo" %% "play2-reactivemongo" % "0.11.11-play24",
-  "com.adrianhurt" %% "play-bootstrap" % "1.0-P24-B3",
+  "org.reactivemongo" %% "play2-reactivemongo" % "0.11.13",
+  "com.adrianhurt" %% "play-bootstrap" % "1.0-P25-B3",
   "org.mockito" % "mockito-core" % "1.10.19" % "test",
   "org.webjars.bower" % "jsrender" % "1.0.0-rc.70",
   "org.webjars" % "node-uuid" % "1.4.7"
@@ -39,9 +37,7 @@ libraryDependencies ++= Seq(
 libraryDependencies += filters
 libraryDependencies += ws
 libraryDependencies += specs2 % Test
-libraryDependencies += "org.w3" %% "banana-jena" % "0.8.1" //"0.8.1"
-libraryDependencies += "org.w3" %% "banana-sesame" % "0.8.1" //"0.8.1"
-libraryDependencies += "io.megl" %% "play-json-extra" % "2.4.3"
+libraryDependencies += "org.w3" %% "banana-jena" % "0.8.1" excludeAll(ExclusionRule(organization = "org.slf4j")) 
 //updateOptions := updateOptions.value.withCachedResolution(true)
 
 //fork in run := true
