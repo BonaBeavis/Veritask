@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 ENV ACTIVATOR_VERSION 1.3.10
 
 RUN curl -O http://downloads.typesafe.com/typesafe-activator/$ACTIVATOR_VERSION/typesafe-activator-${ACTIVATOR_VERSION}-minimal.zip \
-    && unzip typesafe-activator-${ACTIVATOR_VERSION}-minimal.zip -d \
+    && unzip typesafe-activator-${ACTIVATOR_VERSION}-minimal.zip -d / \
     && rm typesafe-activator-${ACTIVATOR_VERSION}-minimal.zip \
     && chmod a+x /activator-${ACTIVATOR_VERSION}-minimal/bin/activator
 
