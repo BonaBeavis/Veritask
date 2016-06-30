@@ -1,6 +1,7 @@
 package controllers
 
 import java.io.FileReader
+import java.lang.Exception
 import java.net.URL
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
@@ -29,7 +30,8 @@ class Tasksets @Inject() (
                            val verificationRepo: VerificationRepo,
                            val validator: SimpleValidator,
                            val messagesApi: MessagesApi,
-                           val ws: WSClient
+                           val ws: WSClient,
+                           val configuration: play.api.Configuration
 ) extends Controller
   with I18nSupport
   with ConfigBanana {
@@ -125,8 +127,8 @@ class Tasksets @Inject() (
     val result = for {
       query <- parseSelect(queryString)
       solutions <- endpoint.executeSelect(query, Map())
+      solution = solutions.iterator.next
     } yield {
-      val solution = solutions.iterator.next
       solution.vars.map(a => a -> solution.get(a).toString).toMap
     }
     result match {
@@ -149,12 +151,15 @@ class Tasksets @Inject() (
   def getUser(name: String): Future[User] = {
     userRepo.search("name", name) flatMap {
       case users: Traversable[User] if users.nonEmpty => Future(users.head)
-      case _ => userRepo.save(User(
-        UUID.randomUUID(),
-        name,
-        scala.util.Random.nextInt(3),
-        List(System.currentTimeMillis())
-      ))
+      case _ =>
+        val groups = configuration.getLongSeq("veritask.groups").get
+        userRepo.save(User(
+          UUID.randomUUID(),
+          name,
+          scala.util.Random.nextInt(groups.size),
+          List(System.currentTimeMillis())
+          )
+        )
     }
   }
 
@@ -162,7 +167,7 @@ class Tasksets @Inject() (
     getUser(name) flatMap {
       case u:User if isTurn(u) =>
         val userStamped = u.copy(timeStamps = System.currentTimeMillis() :: u.timeStamps)
-        for {
+        val body = for {
           user <- userRepo.save(userStamped)
           task <- taskRepo.selectTaskToVerify
           taskset <- tasksetRepo.findById(task.taskset)
@@ -175,6 +180,7 @@ class Tasksets @Inject() (
             "template" -> JsString(taskset.get.template)
           )
         } yield Ok(Json.toJson(json))
+        body.recover { case t:Throwable => Redirect(routes.Tasksets.getTask(name))}
       case _ => Future(Ok(Json.toJson(JsNull)))
     }
   }
@@ -182,11 +188,8 @@ class Tasksets @Inject() (
 
   def isTurn(user: User): Boolean = {
     val timeSinceLastRequest = System.currentTimeMillis() - user.timeStamps.head
-    user.group match {
-      case 0 => timeSinceLastRequest > 10000
-      case 1 => timeSinceLastRequest > 20000
-      case 2 => timeSinceLastRequest > 30000
-    }
+    val groups = configuration.getLongSeq("veritask.groups").get
+    timeSinceLastRequest > groups(user.group)
   }
 
 
@@ -207,10 +210,9 @@ class Tasksets @Inject() (
   }
 
   def dumpVerification(verification: Verification) =  {
-
+    val url = configuration.getLongSeq("veritask.groups").get
     val request: WSRequest = ws.url("http://localhost:3030/testo")
     import ops._
-    import recordBinder._
     val test = for {
       link <- verificationRepo.getLink(verification)
     } yield turtleWriter.asString(VerificationDump(
