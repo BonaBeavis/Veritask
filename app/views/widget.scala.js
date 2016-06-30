@@ -58,7 +58,7 @@ var veritask = function() {
                     templates = window.jsrender.templates;
                 }
                 var myTmpl = templates(data.template);
-                var html = myTmpl.render(data.task);
+                var html = myTmpl.render(data);
                 jQuery('#vt-yes').click(function () {
                     postVerification(true, data)
                 });
