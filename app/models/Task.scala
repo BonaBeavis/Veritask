@@ -10,8 +10,8 @@ import reactivemongo.api.indexes.{Index, IndexType}
 case class Task(_id: UUID,
                 taskset: UUID,
                 link_id: UUID,
-                subjectAttributes: Map[String, String] = Map(),
-                objectAttributes: Map[String, String] = Map()
+                subjectAttributes: Option[Map[String, String]],
+                objectAttributes: Option[Map[String, String]]
                ) extends MongoEntity
 
 object Task {

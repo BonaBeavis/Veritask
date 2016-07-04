@@ -75,7 +75,12 @@ class Tasksets @Inject() (
       request.body.file("linkset") match {
         case Some(linkset) => parseLinksetFile(linkset.ref.file) match {
           case Success(links) =>
-            val tasks = links.map(link => new Task(UUID.randomUUID(), UUID.fromString(tasksetId), link._id, Map("val" -> "key")))
+            val tasks = links.map(link => new Task(
+              UUID.randomUUID(),
+              UUID.fromString(tasksetId),
+              link._id,
+              None,
+              None))
             for {
               linkS <- Future.sequence(links.map(linkRepo.save))
               taskS <- Future.sequence(tasks.map(taskRepo.save))
@@ -104,33 +109,39 @@ class Tasksets @Inject() (
   }
 
   def updateTaskAttributes(task: Task, taskset: Taskset, link: Link): Future[Task] = {
-      val subQueryString = taskset.subjectAttributesQuery.replaceAll(
+      val subQueryString = taskset.subjectAttributesQuery.map(_.replaceAll(
         "\\{\\{\\s*linkSubject\\s*\\}\\}", "<" + link.linkSubject + ">"
-      )
-      val objQueryString = taskset.objectAttributesQuery.replaceAll(
-        "\\{\\{\\s*linkObject\\s*\\}\\}", "<" + link.linkSubject + ">"
-      )
+      ))
+      val objQueryString = taskset.objectAttributesQuery.map(_.replaceAll(
+        "\\{\\{\\s*linkObject\\s*\\}\\}", "<" + link.linkObject + ">"
+      ))
 
     for {
-      subAttributes <- queryAttribute(new URL(taskset.subjectEndpoint), subQueryString)
-      objAttributes <- queryAttribute(new URL(taskset.objectEndpoint), objQueryString)
+      subAttributes <- queryAttribute(taskset.subjectEndpoint, subQueryString)
+      objAttributes <- queryAttribute(taskset.objectEndpoint, objQueryString)
       updatedTask = task.copy(subjectAttributes = subAttributes, objectAttributes = objAttributes)
       savedTask <- taskRepo.save(updatedTask)
     } yield savedTask
   }
 
-  def queryAttribute(endpoint: URL, queryString: String): Future[Map[String, String]] = {
+  def queryAttribute(endpoint: Option[String], queryString: Option[String]): Future[Option[Map[String, String]]] = {
     import ops._
     import sparqlOps._
     import sparqlHttp.sparqlEngineSyntax._
 
-    val result = for {
-      query <- parseSelect(queryString)
-      solutions <- endpoint.executeSelect(query, Map())
-      solution = solutions.iterator.next
-    } yield {
-      solution.vars.map(a => a -> solution.get(a).toString).toMap
+    val result = (endpoint, queryString) match {
+      case (Some(endpoint), Some(queryString)) =>
+        val endpointURL = new URL(endpoint)
+        for {
+          query <- parseSelect(queryString)
+          solutions <- endpointURL.executeSelect(query, Map())
+          solution = solutions.iterator.next
+        } yield {
+          Some(solution.vars.map(a => a -> solution.get(a).toString).toMap)
+        }
+      case _ => Try(None)
     }
+
     result match {
       case Success(attributes) => Future.successful(attributes)
       case Failure(t) => Future.failed(t)
@@ -173,7 +184,6 @@ class Tasksets @Inject() (
           taskset <- tasksetRepo.findById(task.taskset)
           link <- linkRepo.findById(task.link_id)
           updatedTask <- updateTaskAttributes(task, taskset.get, link.get)
-          if taskset.nonEmpty && link.nonEmpty
           json = Json.obj(
             "verifier" -> user._id,
             "link" -> Json.toJson(link),
@@ -181,7 +191,7 @@ class Tasksets @Inject() (
             "template" -> JsString(taskset.get.template)
           )
         } yield Ok(Json.toJson(json))
-        body.recover { case t:Throwable => Redirect(routes.Tasksets.getTask(name))}
+        body.recover { case t:Throwable => Ok(Json.toJson(JsNull))}
       case _ => Future(Ok(Json.toJson(JsNull)))
     }
   }
@@ -211,8 +221,8 @@ class Tasksets @Inject() (
   }
 
   def dumpVerification(verification: Verification) =  {
-    val url = configuration.getLongSeq("veritask.groups").get
-    val request: WSRequest = ws.url("http://localhost:3030/testo")
+    val url = configuration.getString("veritask.groups").get
+    val request: WSRequest = ws.url(url)
     import ops._
     val test = for {
       link <- verificationRepo.getLink(verification)

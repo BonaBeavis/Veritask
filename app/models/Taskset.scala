@@ -9,10 +9,10 @@ import play.api.libs.json.Json
 case class Taskset(
                     _id: UUID,
                     name: String,
-                    subjectEndpoint: String,
-                    objectEndpoint: String,
-                    subjectAttributesQuery: String,
-                    objectAttributesQuery: String,
+                    subjectEndpoint: Option[String],
+                    objectEndpoint: Option[String],
+                    subjectAttributesQuery: Option[String],
+                    objectAttributesQuery: Option[String],
                     template: String
                   ) extends MongoEntity
 
@@ -24,10 +24,10 @@ object Taskset {
     mapping(
       "_id" -> default(uuid, UUID.randomUUID()),
       "name" -> text,
-      "subjectEndpoint" -> text,
-      "objectEndpoint" -> text,
-      "subjectAttributesQuery" -> text,
-      "objectAttributesQuery" -> text,
+      "subjectEndpoint" -> optional(text),
+      "objectEndpoint" -> optional(text),
+      "subjectAttributesQuery" -> optional(text),
+      "objectAttributesQuery" -> optional(text),
       "template" -> text
     )(Taskset.apply)(Taskset.unapply)
   )
