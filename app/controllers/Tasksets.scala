@@ -1,7 +1,6 @@
 package controllers
 
 import java.io.FileReader
-import java.lang.Exception
 import java.net.URL
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
@@ -105,7 +104,7 @@ class Tasksets @Inject() (
     val p = predicate.toString()
     val o = objectt.toString()
     val uuid = UUID.nameUUIDFromBytes((s + p + o).getBytes)
-    Link(uuid, s, p, o)
+    Link(uuid, s, p, o, None)
   }
 
   def updateTaskAttributes(task: Task, taskset: Taskset, link: Link): Future[Task] = {
@@ -124,12 +123,12 @@ class Tasksets @Inject() (
     } yield savedTask
   }
 
-  def queryAttribute(endpoint: Option[String], queryString: Option[String]): Future[Option[Map[String, String]]] = {
+  def queryAttribute(endpointOpt: Option[String], queryStringOpt: Option[String]): Future[Option[Map[String, String]]] = {
     import ops._
     import sparqlOps._
     import sparqlHttp.sparqlEngineSyntax._
 
-    val result = (endpoint, queryString) match {
+    val result = (endpointOpt, queryStringOpt) match {
       case (Some(endpoint), Some(queryString)) =>
         val endpointURL = new URL(endpoint)
         for {
@@ -180,6 +179,7 @@ class Tasksets @Inject() (
         val userStamped = u.copy(timeStamps = System.currentTimeMillis() :: u.timeStamps)
         val body = for {
           user <- userRepo.save(userStamped)
+          //task <- taskRepo.selectTaskToVerify
           task <- taskRepo.selectTaskToVerify
           taskset <- tasksetRepo.findById(task.taskset)
           link <- linkRepo.findById(task.link_id)
@@ -211,28 +211,34 @@ class Tasksets @Inject() (
         Future(BadRequest(Json.obj("status" -> "KO", "message" -> JsError.toJson(errors))))
       },
       verification => {
-        dumpVerification(verification)
-        for {
+        val estimation = for {
           veri <- verificationRepo.save(verification)
-          validation <- validator.validate(veri)
-        } yield Ok(Json.toJson(validation.toString))
+          est <- validator.process(veri)
+          throwaway <- dumpVerification(veri, est)
+        } yield est
+
+        estimation map {
+          case a: Double if a > 0.5 => Ok(Json.toJson(true))
+          case _ => Ok(Json.toJson(false))
+        }
       }
+
     )
   }
 
-  def dumpVerification(verification: Verification) =  {
-    val url = configuration.getString("veritask.groups").get
+  def dumpVerification(verification: Verification, estimation: Double) =  {
+    val url = configuration.getString("triplestore.uri").get
     val request: WSRequest = ws.url(url)
     import ops._
     val test = for {
       link <- verificationRepo.getLink(verification)
-    } yield turtleWriter.asString(VerificationDump(
-      verification._id,
-      verification.verifier.toString,
-      link,
-      Some(true)
-    ).toPG.graph, "").get
-
+    } yield turtleWriter.asString(
+      VerificationDump(
+        verification._id,
+        verification.verifier.toString,
+        link.copy(estimation = Some(estimation)),
+        Some(true)
+      ).toPG.graph, "").get
     for {
       test <- test
       req <- request.withHeaders("Content-Type" -> "text/turtle").withMethod("POST").post(test)

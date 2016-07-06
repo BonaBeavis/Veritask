@@ -59,13 +59,13 @@ var veritask = function() {
                 }
                 var myTmpl = templates(data.template);
                 var html = myTmpl.render(data);
-                jQuery('#vt-yes').click(function () {
+                jQuery('#vt-yes').off().click(function () {
                     postVerification(true, data)
                 });
-                jQuery('#vt-no').click(function () {
+                jQuery('#vt-no').off().click(function () {
                     postVerification(false, data)
                 });
-                jQuery('#vt-unsure').click(function () {
+                jQuery('#vt-unsure').off().click(function () {
                     postVerification(null, data)
                 });
                 jQuery('#vt-template').html(html);

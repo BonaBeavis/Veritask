@@ -7,27 +7,28 @@ import models.{SimpleValidatorStats, Task, Verification}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import org.apache.commons.math3.stat.interval.WilsonScoreInterval
+import org.apache.commons.math3.stat.interval.ConfidenceInterval
 /**
   * Created by beavis on 08.06.16.
   */
 trait Validator {
-  def validate(verification: Verification): Future[Boolean]
+  def process(verification: Verification): Future[Double]
 }
 
 class SimpleValidator @Inject()(
-                                 val simpleValidatorStatsRepo: SimpleValidatorStatsRepo
+                                 val simpleValidatorStatsRepo: SimpleValidatorStatsRepo,
+                                 val configuration: play.api.Configuration
                                ) extends Validator {
 
-  def validate(verification: Verification): Future[Boolean] = {
-    updateStats(verification).map(validation(_))
+  override def process(verification: Verification): Future[Double] = {
+    updateStats(verification).map(wilsonScoreCenter(_))
   }
 
   def updateStats(verification: Verification): Future[SimpleValidatorStats] = {
-    val stats = simpleValidatorStatsRepo.search("task_id", verification.task_id.toString) flatMap {
-      case s: Traversable[SimpleValidatorStats] if s.size == 1 => Future.successful(s.head)
-      case s: Traversable[SimpleValidatorStats] if s.isEmpty =>
-        Future.successful(new SimpleValidatorStats(task_id = verification.task_id))
-      case _ => Future.failed(new Throwable("Database corrupt"))
+    val stats = simpleValidatorStatsRepo.getStats(verification) map {
+      case Some(s) => s
+      case None => new SimpleValidatorStats(task_id = verification.task_id)
     }
     val updatedStats = verification.value match {
       case None => stats.map(x => x.copy(numNoValue = x.numNoValue + 1))
@@ -40,5 +41,11 @@ class SimpleValidator @Inject()(
     } yield updatedStats
   }
 
-  def validation(stats: SimpleValidatorStats) = stats.numTrue >= stats.numFalse
+  def wilsonScoreCenter(stats: SimpleValidatorStats) = {
+    val confidence = configuration.getDouble("veritask.confidence").get
+    def wilsonScoreInterval = new WilsonScoreInterval
+    def interval = wilsonScoreInterval.createInterval(
+      stats.numTrue + stats.numFalse, stats.numTrue, confidence)
+    (interval.getLowerBound + interval.getUpperBound) / 2
+  }
 }

@@ -34,6 +34,8 @@ libraryDependencies += filters
 libraryDependencies += ws
 libraryDependencies += specs2 % Test
 libraryDependencies += "org.w3" %% "banana-jena" % "0.8.1" excludeAll(ExclusionRule(organization = "org.slf4j"))
+libraryDependencies += "org.apache.commons" % "commons-math3" % "3.6.1"
+
 //updateOptions := updateOptions.value.withCachedResolution(true)
 
 //fork in run := true

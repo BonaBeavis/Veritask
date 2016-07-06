@@ -10,8 +10,6 @@ import play.api.libs.json._
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.commands.{MultiBulkWriteResult, WriteResult}
 
-import scala.util.Try
-
 trait Repository[E] {
 
   def save(entity: E)(implicit ec: ExecutionContext): Future[E]
@@ -21,6 +19,8 @@ trait Repository[E] {
   def findById()(implicit ec: ExecutionContext): Future[Option[E]]
 
   def search(key: String, value: String)(implicit ec: ExecutionContext): Future[Traversable[E]]
+
+  def search(key: String, values: Traversable[String])(implicit ec: ExecutionContext): Future[Traversable[E]]
 
   def findAll()(implicit ec: ExecutionContext): Future[Traversable[E]]
 //
@@ -35,10 +35,15 @@ trait VerificationRepository extends Repository[Verification] {
   def getLink(verification: Verification)(implicit ec: ExecutionContext): Future[Link]
 }
 
+trait SimpleValidatorStatsRepository extends Repository[SimpleValidatorStats] {
+  def getStats(verification: Verification)(implicit ec: ExecutionContext): Future[Option[SimpleValidatorStats]]
+}
+
+import reactivemongo.play.json._
+import reactivemongo.play.json.collection.JSONCollection
+
 abstract class MongoRepository[E <: MongoEntity : OWrites : Reads] extends Repository[E] {
 
-  import reactivemongo.play.json._
-  import reactivemongo.play.json.collection.JSONCollection
 
   /** Mongo collection deserializable to [E] */
   def col(implicit ec: ExecutionContext): Future[JSONCollection]
@@ -58,9 +63,14 @@ abstract class MongoRepository[E <: MongoEntity : OWrites : Reads] extends Repos
     col flatMap (_.find(Json.obj()).one[E])
   }
 
-  def search( name: String, value: String
+  def search(name: String, value: String
                       )(implicit ec: ExecutionContext): Future[Traversable[E]] = {
     col flatMap (_.find(Json.obj(name -> value)).cursor[E]().collect[List]())
+  }
+
+  def search(name: String, values: Traversable[String])
+            (implicit ec: ExecutionContext): Future[Traversable[E]] = {
+    col flatMap (_.find(Json.obj(name -> Json.obj("$in" -> values))).cursor[E]().collect[List]())
   }
 
   def findAll()(implicit ec: ExecutionContext): Future[Traversable[E]] = {
@@ -69,8 +79,6 @@ abstract class MongoRepository[E <: MongoEntity : OWrites : Reads] extends Repos
 }
 
 import reactivemongo.play.json.collection._
-import play.api.Play.current
-import reactivemongo.play.json._
 import reactivemongo.play.json.collection.JSONCollection
 
 class TasksetRepo @Inject() (val reactiveMongoApi: ReactiveMongoApi)
@@ -105,12 +113,15 @@ class VerificationRepo @Inject()(
                                  val reactiveMongoApi: ReactiveMongoApi,
                                  val linkRepo: LinkRepo,
                                  val taskRepo: TaskRepo
-                               )  extends MongoRepository[Verification] with VerificationRepository {
+                               )
+  extends MongoRepository[Verification]
+  with VerificationRepository {
 
   override def col(implicit ec: ExecutionContext): Future[JSONCollection] =
     reactiveMongoApi.database.map(_.collection[JSONCollection]("verifications"))
 
-  override def getLink(verification: Verification)(implicit ec: ExecutionContext): Future[Link] = {
+  override def getLink(verification: Verification)
+                      (implicit ec: ExecutionContext): Future[Link] = {
     val linkFuture = for {
       task <- taskRepo.findById(verification.task_id)
       link <- linkRepo.findById(task.get.link_id)
@@ -122,11 +133,17 @@ class VerificationRepo @Inject()(
   }
 }
 
-class SimpleValidatorStatsRepo @Inject() (val reactiveMongoApi: ReactiveMongoApi)
-  extends MongoRepository[SimpleValidatorStats] {
+class SimpleValidatorStatsRepo @Inject()(val reactiveMongoApi: ReactiveMongoApi)
+  extends MongoRepository[SimpleValidatorStats]
+    with SimpleValidatorStatsRepository {
 
   override def col(implicit ec: ExecutionContext): Future[JSONCollection] =
     reactiveMongoApi.database.map(_.collection[JSONCollection]("simpleValidatorStats"))
+
+  override def getStats(verification: Verification)
+                       (implicit ec: ExecutionContext): Future[Option[SimpleValidatorStats]] = {
+    col flatMap (_.find(Json.obj("task_id" -> verification.task_id.toString)).one[SimpleValidatorStats])
+  }
 }
 
 class UserRepo @Inject() (val reactiveMongoApi: ReactiveMongoApi)
