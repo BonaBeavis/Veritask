@@ -39,7 +39,7 @@ var veritask = function() {
                 type: "text/css",
                 href: '@routes.Assets.versioned("lib/bootstrap/css/bootstrap.css").absoluteURL'
             });
-            css_link.appendTo('head');
+            //css_link.appendTo('head');
 
             jQuery('#veritask').hide();
             jQuery.get('@routes.Application.widgetHTML.absoluteURL', function (data) {
