@@ -23,7 +23,7 @@
         }
         <script src="@routes.Application.widget()" type="text/javascript"></script>
         <div id="veritask" style="height: 600px; width: 600px;"></div>
-        <button onclick="veritask.challengeUser('testUser')">Click me</button>
+        <button onclick="veritask.challengeUser('testUser', '@tasksetForm("_id").value.get')">Test Task</button>
 
     } else {
         <h1>ID NOT notdefinded</h1>

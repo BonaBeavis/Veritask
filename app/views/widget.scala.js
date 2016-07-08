@@ -48,29 +48,35 @@ var veritask = function() {
         });
     }
 
-    function challengeUser(user) {
-        jQuery.getJSON('@routes.Tasksets.getTask("").absoluteURL' + user, function(data) {
-            if (data !== null) {
-                var templates;
-                if (window.jsrender == null) {
-                    templates = window.jQuery.templates;
-                } else {
-                    templates = window.jsrender.templates;
+    function challengeUser(user, taskset) {
+        var tasksetOption = "";
+        if (taskset !== undefined)  {
+           tasksetOption = "?taskset="+taskset;
+        }
+        jQuery.getJSON(
+            '@routes.Tasksets.getTask("", None).absoluteURL' + user + tasksetOption,
+            function(data) {
+                if (data !== null) {
+                    var templates;
+                    if (window.jsrender == null) {
+                        templates = window.jQuery.templates;
+                    } else {
+                        templates = window.jsrender.templates;
+                    }
+                    var myTmpl = templates(data.template);
+                    var html = myTmpl.render(data);
+                    jQuery('#vt-yes').off().click(function () {
+                        postVerification(true, data)
+                    });
+                    jQuery('#vt-no').off().click(function () {
+                        postVerification(false, data)
+                    });
+                    jQuery('#vt-unsure').off().click(function () {
+                        postVerification(null, data)
+                    });
+                    jQuery('#vt-template').html(html);
+                    jQuery('#veritask').show();
                 }
-                var myTmpl = templates(data.template);
-                var html = myTmpl.render(data);
-                jQuery('#vt-yes').off().click(function () {
-                    postVerification(true, data)
-                });
-                jQuery('#vt-no').off().click(function () {
-                    postVerification(false, data)
-                });
-                jQuery('#vt-unsure').off().click(function () {
-                    postVerification(null, data)
-                });
-                jQuery('#vt-template').html(html);
-                jQuery('#veritask').show();
-            }
         });
     }
 

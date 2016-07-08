@@ -28,7 +28,7 @@ trait Repository[E] {
 }
 
 trait TaskRepository extends Repository[Task] {
-  def selectTaskToVerify(implicit ec: ExecutionContext): Future[Task]
+  def selectTaskToVerify(taskset: Option[String])(implicit ec: ExecutionContext): Future[Task]
 }
 
 trait VerificationRepository extends Repository[Verification] {
@@ -94,11 +94,17 @@ extends MongoRepository[Task] with TaskRepository{
   override def col(implicit ec: ExecutionContext): Future[JSONCollection] =
     reactiveMongoApi.database.map(_.collection[JSONCollection]("tasks"))
 
-  override def selectTaskToVerify(implicit ec: ExecutionContext): Future[Task] = {
+  override def selectTaskToVerify(taskset: Option[String])(implicit ec: ExecutionContext): Future[Task] = {
 
-    import JSONBatchCommands.AggregationFramework.{Sample, AggregationResult}
+    import JSONBatchCommands.AggregationFramework.{Sample, Match, AggregationResult}
 
-     col flatMap (_.aggregate(Sample(1)).map(_.head[Task].head))
+    taskset match {
+      case Some(ts) =>
+        val matchOp = Match(Json.obj("taskset" -> ts))
+        col flatMap (_.aggregate(matchOp, List(Sample(1))).map(_.head[Task].head))
+      case None =>
+        col flatMap (_.aggregate(Sample(1)).map(_.head[Task].head))
+     }
   }
 }
 

@@ -173,14 +173,14 @@ class Tasksets @Inject() (
     }
   }
 
-  def getTask(name: String) = Action.async {
+  def getTask(name: String, taskset: Option[String]) = Action.async {
     getUser(name) flatMap {
       case u:User if isTurn(u) =>
         val userStamped = u.copy(timeStamps = System.currentTimeMillis() :: u.timeStamps)
         val body = for {
           user <- userRepo.save(userStamped)
           //task <- taskRepo.selectTaskToVerify
-          task <- taskRepo.selectTaskToVerify
+          task <- taskRepo.selectTaskToVerify(taskset)
           taskset <- tasksetRepo.findById(task.taskset)
           link <- linkRepo.findById(task.link_id)
           updatedTask <- updateTaskAttributes(task, taskset.get, link.get)

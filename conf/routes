@@ -20,7 +20,7 @@ GET         /javascriptRoutes                             controllers.Applicatio
 GET         /template                                     controllers.Application.template(callback: String)
 GET         /widget                                       controllers.Application.widget
 GET         /widgetHTML                                   controllers.Application.widgetHTML
-GET         /getTask/:user                                controllers.Tasksets.getTask(user: String)
+GET         /getTask/:user                                controllers.Tasksets.getTask(user: String, taskset: Option[String])
 POST        /verification                                 controllers.Tasksets.processVerificationPost
 
 # Map static resources from the /public folder to the /assets URL path
