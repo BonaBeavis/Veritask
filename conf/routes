@@ -21,8 +21,6 @@ GET         /getTask/:user                                controllers.Tasks.getT
 POST        /verification                                 controllers.Verifications.processVerificationPost
 
 # Widget
-GET         /javascriptRoutes                             controllers.Application.javascriptRoutes
-GET         /template                                     controllers.Application.template(callback: String)
 GET         /widget                                       controllers.Application.widget
 GET         /widgetHTML                                   controllers.Application.widgetHTML
 
