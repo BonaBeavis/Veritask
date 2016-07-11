@@ -54,7 +54,7 @@ var veritask = function() {
            tasksetOption = "?taskset="+taskset;
         }
         jQuery.getJSON(
-            '@routes.Tasksets.getTask("", None).absoluteURL' + user + tasksetOption,
+            '@routes.Tasks.getTask("", None).absoluteURL' + user + tasksetOption,
             function(data) {
                 if (data !== null) {
                     var templates;

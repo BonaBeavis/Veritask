@@ -14,13 +14,15 @@ GET         /tasksets/:id                                 controllers.Tasksets.u
 POST        /tasksets/:id                                 controllers.Tasksets.saveTaskset(id: String)
 POST        /tasksets/:id/uploadLinks                     controllers.Tasksets.uploadLinksetFile(id: String)
 
+# Tasks
+
+GET         /getTask/:user                                controllers.Tasks.getTask(user: String, taskset: Option[String])
 
 # Widget
 GET         /javascriptRoutes                             controllers.Application.javascriptRoutes
 GET         /template                                     controllers.Application.template(callback: String)
 GET         /widget                                       controllers.Application.widget
 GET         /widgetHTML                                   controllers.Application.widgetHTML
-GET         /getTask/:user                                controllers.Tasksets.getTask(user: String, taskset: Option[String])
 POST        /verification                                 controllers.Tasksets.processVerificationPost
 
 # Map static resources from the /public folder to the /assets URL path
