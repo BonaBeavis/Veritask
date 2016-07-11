@@ -1,17 +1,16 @@
 package controllers
 
-import services._
+import java.net.URL
+import java.util.UUID
+import javax.inject.Inject
+
 import config.ConfigBanana
 import models.{Link, Task, Taskset, User}
-
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.{JsNull, JsString, Json}
 import play.api.mvc.{Action, Controller}
-
-import java.net.URL
-import java.util.UUID
-import javax.inject.Inject
+import services._
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -94,8 +93,8 @@ class Tasks @Inject() (
     queryStringOpt: Option[String]): Future[Option[Map[String, String]]] = {
 
     import ops._
-    import sparqlOps._
     import sparqlHttp.sparqlEngineSyntax._
+    import sparqlOps._
 
     val result = (endpointOpt, queryStringOpt) match {
       case (Some(endpoint), Some(queryString)) =>

@@ -83,7 +83,7 @@ var veritask = function() {
     function postVerification(answer, data) {
         var verification = { _id: uuid.v1(), verifier: data.verifier, task_id: data.task._id, value: answer };
         jQuery.ajax({
-            url:'@routes.Tasksets.processVerificationPost.absoluteURL',
+            url:'@routes.Verifications.processVerificationPost.absoluteURL',
             method:"POST",
             data: JSON.stringify(verification),
             contentType:"application/json",

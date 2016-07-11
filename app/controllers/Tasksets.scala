@@ -1,33 +1,29 @@
 package controllers
 
 import java.io.FileReader
-import java.net.URL
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import config.ConfigBanana
 import models.Taskset.tasksetForm
-import models.{Task, _}
+import models._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.json._
-import play.api.mvc._
 import play.api.libs.ws._
+import play.api.mvc._
 import services._
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-class TasksetRequest[A](val taskset: Taskset, request: Request[A]) extends WrappedRequest[A](request)
+class TasksetRequest[A](
+  val taskset: Taskset, request: Request[A]) extends WrappedRequest[A](request)
 
 @Singleton
 class Tasksets @Inject() (
                            val tasksetRepo: TasksetRepo,
                            val taskRepo: TaskRepo,
                            val linkRepo: LinkRepo,
-                           val userRepo: UserRepo,
-                           val verificationRepo: VerificationRepo,
-                           val validator: SimpleValidator,
                            val messagesApi: MessagesApi,
                            val ws: WSClient,
                            val configuration: play.api.Configuration
@@ -56,7 +52,8 @@ class Tasksets @Inject() (
 
   def updateTasksetView(id: String) =
     (Action andThen TasksetAction(id)) { request =>
-      Ok(views.html.createTasksetForm(tasksetForm.fillAndValidate(request.taskset)))
+      Ok(views.html.createTasksetForm(
+        tasksetForm.fillAndValidate(request.taskset)))
     }
 
   def saveTaskset(id: String) = Action.async { implicit request =>
@@ -70,7 +67,8 @@ class Tasksets @Inject() (
   }
 
   def uploadLinksetFile(tasksetId: String) =
-    (Action andThen TasksetAction(tasksetId)).async(parse.multipartFormData) { request =>
+    (Action andThen TasksetAction(tasksetId)).async(parse.multipartFormData) {
+      request =>
       request.body.file("linkset") match {
         case Some(linkset) => parseLinksetFile(linkset.ref.file) match {
           case Success(links) =>
@@ -83,8 +81,10 @@ class Tasksets @Inject() (
             for {
               linkS <- Future.sequence(links.map(linkRepo.save))
               taskS <- Future.sequence(tasks.map(taskRepo.save))
-            } yield Ok(taskS.size + " Tasks upserted, " + linkS.size + " Links upserted")
-          case Failure(failure) => Future.successful(BadRequest("File could not be parsed"))
+            } yield Ok(
+              taskS.size + " Tasks upserted, " + linkS.size + " Links upserted")
+          case Failure(failure) => Future.successful(
+            BadRequest("File could not be parsed"))
         }
         case None => Future.successful(BadRequest("No RDF file"))
       }
@@ -105,47 +105,6 @@ class Tasksets @Inject() (
     val o = objectt.toString()
     val uuid = UUID.nameUUIDFromBytes((s + p + o).getBytes)
     Link(uuid, s, p, o, None)
-  }
-
-  def processVerificationPost() = Action.async(BodyParsers.parse.json) { request =>
-    val verification = request.body.validate[Verification]
-    verification.fold(
-      errors => {
-        Future(BadRequest(Json.obj("status" -> "KO", "message" -> JsError.toJson(errors))))
-      },
-      verification => {
-        val estimation = for {
-          veri <- verificationRepo.save(verification)
-          est <- validator.process(veri)
-          throwaway <- dumpVerification(veri, est)
-        } yield est
-
-        estimation map {
-          case a: Double if a > 0.5 => Ok(Json.toJson(true))
-          case _ => Ok(Json.toJson(false))
-        }
-      }
-
-    )
-  }
-
-  def dumpVerification(verification: Verification, estimation: Double) =  {
-    val url = configuration.getString("triplestore.uri").get
-    val request: WSRequest = ws.url(url)
-    import ops._
-    val test = for {
-      link <- verificationRepo.getLink(verification)
-    } yield turtleWriter.asString(
-      VerificationDump(
-        verification._id,
-        verification.verifier.toString,
-        link.copy(estimation = Some(estimation)),
-        Some(true)
-      ).toPG.graph, "").get
-    for {
-      test <- test
-      req <- request.withHeaders("Content-Type" -> "text/turtle").withMethod("POST").post(test)
-    } yield "Done"
   }
 }
 
