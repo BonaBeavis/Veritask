@@ -14,11 +14,11 @@ import services.{SimpleValidator, _}
 import scala.concurrent.Future
 
 class Verifications @Inject() (
-  val verificationRepo: VerificationRepo,
-  val validator: SimpleValidator,
-  val messagesApi: MessagesApi,
-  val ws: WSClient,
-  val configuration: play.api.Configuration)
+                                val verificationRepo: VerificationMongoRepo,
+                                val validator: SimpleValidator,
+                                val messagesApi: MessagesApi,
+                                val ws: WSClient,
+                                val configuration: play.api.Configuration)
   extends Controller with I18nSupport with ConfigBanana {
 
   def processVerificationPost() = Action.async(BodyParsers.parse.json) {

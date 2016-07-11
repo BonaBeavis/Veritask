@@ -21,9 +21,9 @@ class TasksetRequest[A](
 
 @Singleton
 class Tasksets @Inject() (
-                           val tasksetRepo: TasksetRepo,
-                           val taskRepo: TaskRepo,
-                           val linkRepo: LinkRepo,
+                           val tasksetRepo: TasksetMongoRepo,
+                           val taskRepo: TaskMongoRepo,
+                           val linkRepo: LinkMongoRepo,
                            val messagesApi: MessagesApi,
                            val ws: WSClient,
                            val configuration: play.api.Configuration

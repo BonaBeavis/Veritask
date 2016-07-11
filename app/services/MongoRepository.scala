@@ -53,14 +53,14 @@ abstract class MongoRepository[E <: MongoEntity : OWrites : Reads]
   }
 }
 
-class TasksetRepo @Inject() (val reactiveMongoApi: ReactiveMongoApi)
+class TasksetMongoRepo @Inject()(val reactiveMongoApi: ReactiveMongoApi)
   extends MongoRepository[Taskset] {
 
   override def col(implicit ec: ExecutionContext): Future[JSONCollection] =
     reactiveMongoApi.database.map(_.collection[JSONCollection]("tasksets"))
 }
 
-class TaskRepo @Inject() (val reactiveMongoApi: ReactiveMongoApi)
+class TaskMongoRepo @Inject()(val reactiveMongoApi: ReactiveMongoApi)
   extends MongoRepository[Task] with TaskRepository{
 
   override def col(implicit ec: ExecutionContext): Future[JSONCollection] =
@@ -83,17 +83,17 @@ class TaskRepo @Inject() (val reactiveMongoApi: ReactiveMongoApi)
   }
 }
 
-class LinkRepo @Inject() (val reactiveMongoApi: ReactiveMongoApi)
+class LinkMongoRepo @Inject()(val reactiveMongoApi: ReactiveMongoApi)
   extends MongoRepository[Link] {
 
   override def col(implicit ec: ExecutionContext): Future[JSONCollection] =
     reactiveMongoApi.database.map(_.collection[JSONCollection]("links"))
 }
 
-class VerificationRepo @Inject()(
+class VerificationMongoRepo @Inject()(
                                   val reactiveMongoApi: ReactiveMongoApi,
-                                  val linkRepo: LinkRepo,
-                                  val taskRepo: TaskRepo
+                                  val linkRepo: LinkMongoRepo,
+                                  val taskRepo: TaskMongoRepo
                                 )
   extends MongoRepository[Verification]
     with VerificationRepository {
@@ -114,7 +114,7 @@ class VerificationRepo @Inject()(
   }
 }
 
-class SimpleValidatorStatsRepo @Inject()(val reactiveMongoApi: ReactiveMongoApi)
+class SimpleValidatorStatsMongoRepo @Inject()(val reactiveMongoApi: ReactiveMongoApi)
   extends MongoRepository[SimpleValidatorStats]
     with SimpleValidatorStatsRepository {
 
@@ -130,7 +130,7 @@ class SimpleValidatorStatsRepo @Inject()(val reactiveMongoApi: ReactiveMongoApi)
   }
 }
 
-class UserRepo @Inject() (val reactiveMongoApi: ReactiveMongoApi)
+class UserMongoRepo @Inject()(val reactiveMongoApi: ReactiveMongoApi)
   extends MongoRepository[User] {
 
   override def col(implicit ec: ExecutionContext): Future[JSONCollection] =

@@ -16,12 +16,12 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 class Tasks @Inject() (
-  val tasksetRepo: TasksetRepo,
-  val taskRepo: TaskRepo,
-  val linkRepo: LinkRepo,
-  val userRepo: UserRepo,
-  val messagesApi: MessagesApi,
-  val configuration: play.api.Configuration)
+                        val tasksetRepo: TasksetMongoRepo,
+                        val taskRepo: TaskMongoRepo,
+                        val linkRepo: LinkMongoRepo,
+                        val userRepo: UserMongoRepo,
+                        val messagesApi: MessagesApi,
+                        val configuration: play.api.Configuration)
   extends Controller
   with I18nSupport
   with ConfigBanana {

@@ -17,7 +17,7 @@ trait Validator {
 }
 
 class SimpleValidator @Inject()(
-                                 val simpleValidatorStatsRepo: SimpleValidatorStatsRepo,
+                                 val simpleValidatorStatsRepo: SimpleValidatorStatsMongoRepo,
                                  val configuration: play.api.Configuration
                                ) extends Validator {
 
