@@ -33,14 +33,15 @@ class Tasks @Inject() (
           timeStamps = System.currentTimeMillis() :: u.timeStamps)
         val body = for {
           user <- userRepo.save(userStamped)
-          task <- taskRepo.selectTaskToVerify(taskset)
+          task <- taskRepo.selectTaskToVerify(taskset, user.validations.map(_.task_id))
           taskset <- tasksetRepo.findById(task.taskset)
           link <- linkRepo.findById(task.link_id)
-          updatedTask <- updateTaskAttributes(task, taskset.get, link.get)
+          task <- updateTaskAttributes(task, taskset.get, link.get)
+          task <- taskRepo.save(task)
           json = Json.obj(
             "verifier" -> user._id,
             "link" -> Json.toJson(link),
-            "task" -> Json.toJson(updatedTask),
+            "task" -> Json.toJson(task),
             "template" -> JsString(taskset.get.template)
           )
         } yield Ok(Json.toJson(json))
@@ -59,7 +60,9 @@ class Tasks @Inject() (
             UUID.randomUUID(),
             name,
             scala.util.Random.nextInt(groups.size),
-            List(System.currentTimeMillis())))
+            List(System.currentTimeMillis())
+          )
+        )
     }
   }
 
@@ -71,21 +74,25 @@ class Tasks @Inject() (
 
   def updateTaskAttributes(
     task: Task, taskset: Taskset, link: Link): Future[Task] = {
-
-    val subQueryString = taskset.subjectAttributesQuery.map(_.replaceAll(
-      "\\{\\{\\s*linkSubject\\s*\\}\\}", "<" + link.linkSubject + ">"
-    ))
-    val objQueryString = taskset.objectAttributesQuery.map(_.replaceAll(
-      "\\{\\{\\s*linkObject\\s*\\}\\}", "<" + link.linkObject + ">"
-    ))
-    for {
-      subAttributes <- queryAttribute(taskset.subjectEndpoint, subQueryString)
-      objAttributes <- queryAttribute(taskset.objectEndpoint, objQueryString)
-      updatedTask = task.copy(
-        subjectAttributes = subAttributes,
-        objectAttributes = objAttributes)
-      savedTask <- taskRepo.save(updatedTask)
-    } yield savedTask
+    if ((taskset.subjectAttributesQuery.isDefined && task.subjectAttributes.isEmpty) ||
+    (taskset.objectAttributesQuery.isDefined && task.objectAttributes.isEmpty)) {
+      val subQueryString = taskset.subjectAttributesQuery.map(_.replaceAll(
+        "\\{\\{\\s*linkSubjectURI\\s*\\}\\}", "<" + link.linkSubject + ">"
+      ))
+      val objQueryString = taskset.objectAttributesQuery.map(_.replaceAll(
+        "\\{\\{\\s*linkObjectURI\\s*\\}\\}", "<" + link.linkObject + ">"
+      ))
+      for {
+        subAttributes <- queryAttribute(taskset.subjectEndpoint, subQueryString)
+        objAttributes <- queryAttribute(taskset.objectEndpoint, objQueryString)
+        updatedTask = task.copy(
+          subjectAttributes = subAttributes,
+          objectAttributes = objAttributes)
+        savedTask <- taskRepo.save(updatedTask)
+      } yield savedTask
+    } else {
+      Future.successful(task)
+    }
   }
 
   def queryAttribute(

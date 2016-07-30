@@ -48,9 +48,9 @@ var veritask = function() {
         });
     }
 
-    function challengeUser(user, taskset) {
+    function challengeUser(user, taskset, callbackTrue, callbackFalse) {
         var tasksetOption = "";
-        if (taskset !== undefined)  {
+        if (taskset !== "")  {
            tasksetOption = "?taskset="+taskset;
         }
         jQuery.getJSON(
@@ -66,13 +66,13 @@ var veritask = function() {
                     var myTmpl = templates(data.template);
                     var html = myTmpl.render(data);
                     jQuery('#vt-yes').off().click(function () {
-                        postVerification(true, data)
+                        postVerification(true, data, callbackTrue, callbackFalse)
                     });
                     jQuery('#vt-no').off().click(function () {
-                        postVerification(false, data)
+                        postVerification(false, data, callbackTrue, callbackFalse)
                     });
                     jQuery('#vt-unsure').off().click(function () {
-                        postVerification(null, data)
+                        postVerification(null, data, callbackTrue, callbackFalse)
                     });
                     jQuery('#vt-template').html(html);
                     jQuery('#veritask').show();
@@ -80,7 +80,7 @@ var veritask = function() {
         });
     }
 
-    function postVerification(answer, data) {
+    function postVerification(answer, data, callbackTrue, callbackFalse) {
         var verification = { _id: uuid.v1(), verifier: data.verifier, task_id: data.task._id, value: answer };
         jQuery.ajax({
             url:'@routes.Verifications.processVerificationPost.absoluteURL',
@@ -90,6 +90,12 @@ var veritask = function() {
             dataType:"json",
             success: function(data) {
                 console.log(data);
+                if (data === true) {
+                    callbackTrue();
+                }
+                if (data === false) {
+                    callbackFalse();
+                }
                 jQuery('#vt-template').html(data);
                 jQuery('#vt-template').show();
                 jQuery('#veritask').hide();

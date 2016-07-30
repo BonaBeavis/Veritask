@@ -66,19 +66,23 @@ class TaskMongoRepo @Inject()(val reactiveMongoApi: ReactiveMongoApi)
   override def col(implicit ec: ExecutionContext): Future[JSONCollection] =
     reactiveMongoApi.database.map(_.collection[JSONCollection]("tasks"))
 
-  override def selectTaskToVerify(taskset: Option[String])
+  override def selectTaskToVerify(taskset: Option[String],
+                                  excludedTasks: List[String])
     (implicit ec: ExecutionContext): Future[Task] = {
 
     import JSONBatchCommands.AggregationFramework.{Match, Sample}
 
+    val queryTasks = Json.obj("_id" -> Json.obj("$nin" -> excludedTasks))
+
     taskset match {
       case Some(ts) =>
-        val matchOp = Match(Json.obj("taskset" -> ts))
+        val queryTaskset = Json.obj("taskset" -> ts)
+        val mmatch = Json.obj("$and" -> Json.arr(queryTasks, queryTaskset))
         col flatMap (_
-          .aggregate(matchOp, List(Sample(1)))
+          .aggregate(Match(mmatch), List(Sample(1)))
           .map(_.head[Task].head))
       case None =>
-        col flatMap (_.aggregate(Sample(1)).map(_.head[Task].head))
+        col flatMap (_.aggregate(Match(queryTasks), List(Sample(1))).map(_.head[Task].head))
     }
   }
 }

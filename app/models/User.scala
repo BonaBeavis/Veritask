@@ -9,7 +9,8 @@ case class User(
                  _id: UUID,
                  name: String,
                  group: Int,
-                 timeStamps: List[Long]
+                 timeStamps: List[Long],
+                 validations: List[Validation] = List()
 ) extends MongoEntity
 
 object User {

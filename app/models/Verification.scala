@@ -17,7 +17,6 @@ case class Verification(_id: UUID,
                        ) extends MongoEntity
 
 object Verification extends ConfigBanana {
-
   implicit val verificationFormat = Json.format[Verification]
 }
 

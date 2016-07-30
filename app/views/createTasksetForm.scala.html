@@ -8,9 +8,21 @@
         @b3.text(tasksetForm("name"), '_label -> "Name")
         @b3.url(tasksetForm("subjectEndpoint"), '_label -> "Subject Endpoint")
         @b3.url(tasksetForm("objectEndpoint"), '_label -> "Object Endpoint")
-        @b3.textarea(tasksetForm("subjectAttributesQuery"), '_label -> "Subject Attributes Query", 'rows -> 7 )
-        @b3.textarea(tasksetForm("objectAttributesQuery"), '_label -> "Object Attributes Query", 'rows -> 7 )
-        @b3.textarea(tasksetForm("template"), '_label -> "JsRender Template", 'rows -> 14 )
+        @b3.textarea(tasksetForm("subjectAttributesQuery"),
+            '_label -> "Subject Attributes Query",
+            'rows -> 7,
+            'placeholder ->
+                    "PREFIX ont: <http://dbpedia.org/ontology/>\nSELECT ?thumbnail WHERE {\n {{ linkSubjectURI }} ont:thumbnail ?attribute\n } LIMIT 1")
+        @b3.textarea(tasksetForm("objectAttributesQuery"),
+            '_label -> "Object Attributes Query",
+            'rows -> 7,
+            'placeholder ->
+                    "PREFIX ont: <http://dbpedia.org/ontology/>\nSELECT ?thumbnail WHERE {\n {{ linkObjectURI }} ont:thumbnail ?attribute\n } LIMIT 1")
+        )
+        @b3.textarea(tasksetForm("template"),
+            '_label -> "JsRender Template",
+            'rows -> 14,
+            'placeholder -> "<table> <tbody> <tr> <td> <label>Name:</label> {{:task.subjectAttributes.thumbnail}} <img src='{{:task.subjectAttributes.thumbnail}}' alt='some_text'></td> <td>test</td> </tr> </tbody> </table>")
         @b3.submit('class -> "btn btn-default") { Submit }
     }
     @if(tasksetForm("_id").value.isDefined) {
