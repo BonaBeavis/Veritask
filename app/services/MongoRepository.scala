@@ -140,3 +140,10 @@ class UserMongoRepo @Inject()(val reactiveMongoApi: ReactiveMongoApi)
   override def col(implicit ec: ExecutionContext): Future[JSONCollection] =
     reactiveMongoApi.database.map(_.collection[JSONCollection]("users"))
 }
+
+class EvalDataRepo @Inject()(val reactiveMongoApi: ReactiveMongoApi)
+  extends MongoRepository[EvalData] {
+
+  override def col(implicit ec: ExecutionContext): Future[JSONCollection] =
+    reactiveMongoApi.database.map(_.collection[JSONCollection]("evaldata"))
+}

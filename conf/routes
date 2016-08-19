@@ -15,7 +15,7 @@ POST        /tasksets/:id                                 controllers.Tasksets.s
 POST        /tasksets/:id/uploadLinks                     controllers.Tasksets.uploadLinksetFile(id: String)
 
 # Tasks
-GET         /getTask/:user                                controllers.Tasks.getTask(user: String, taskset: Option[String])
+GET         /getTask/:user                                controllers.Tasks.requestTask(user: String, taskset: Option[String])
 
 # Verifications
 POST        /verification                                 controllers.Verifications.processVerificationPost

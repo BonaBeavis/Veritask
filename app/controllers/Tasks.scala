@@ -5,7 +5,7 @@ import java.util.UUID
 import javax.inject.Inject
 
 import config.ConfigBanana
-import models.{Link, Task, Taskset, User}
+import models._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.{JsNull, JsString, Json}
@@ -20,62 +20,76 @@ class Tasks @Inject() (
                         val taskRepo: TaskMongoRepo,
                         val linkRepo: LinkMongoRepo,
                         val userRepo: UserMongoRepo,
+                        val evalDataRepo: EvalDataRepo,
                         val messagesApi: MessagesApi,
                         val configuration: play.api.Configuration)
   extends Controller
   with I18nSupport
   with ConfigBanana {
 
-  def getTask(name: String, taskset: Option[String]) = Action.async {
-    getUser(name) flatMap {
-      case u:User if isTurn(u) =>
-        val userStamped = u.copy(
-          timeStamps = System.currentTimeMillis() :: u.timeStamps)
-        val body = for {
-          user <- userRepo.save(userStamped)
-          task <- taskRepo.selectTaskToVerify(taskset, user.validations.map(_.task_id))
-          taskset <- tasksetRepo.findById(task.taskset)
-          link <- linkRepo.findById(task.link_id)
-          task <- updateTaskAttributes(task, taskset.get, link.get)
-          task <- taskRepo.save(task)
-          json = Json.obj(
-            "verifier" -> user._id,
-            "link" -> Json.toJson(link),
-            "task" -> Json.toJson(task),
-            "template" -> JsString(taskset.get.template)
-          )
-        } yield Ok(Json.toJson(json))
-        body.recover { case t:Throwable => Ok(Json.toJson(JsNull))}
-      case _ => Future(Ok(Json.toJson(JsNull)))
-    }
+  def requestTaskEval(
+                       name: String,
+                       taskset: Option[String],
+                       ability: Boolean) = Action.async { implicit request =>
+    for {
+      user <- getUser(name)
+      evalData <- getEvalData(user)
+      widgetData <- getWidgetData(name, taskset)
+    } yield Ok(Json.toJson(widgetData))
   }
 
-  def getUser(name: String): Future[User] = {
-    userRepo.search("name", name) flatMap {
-      case users: Traversable[User] if users.nonEmpty => Future(users.head)
+  def getEvalData(user: User): Future[EvalData] = {
+    evalDataRepo.search("user_id", user._id.toString) flatMap {
+      case eD: Traversable[EvalData] if eD.nonEmpty =>
+        val evalData = eD.head
+        val stampedEvalData = evalData.copy(
+          timeStamps = System.currentTimeMillis() :: evalData.timeStamps)
+        evalDataRepo.save(stampedEvalData)
       case _ =>
-        val groups = configuration.getLongSeq("veritask.groups").get
-        userRepo.save(
-          User(
+        evalDataRepo.save(
+          EvalData(
             UUID.randomUUID(),
-            name,
-            scala.util.Random.nextInt(groups.size),
+            user._id,
+            selectGroup,
             List(System.currentTimeMillis())
           )
         )
     }
   }
 
-  def isTurn(user: User): Boolean = {
-    val timeSinceLastRequest = System.currentTimeMillis() - user.timeStamps.head
+  def selectGroup: Int = {
+    5
+  }
+
+  def getWidgetData(name: String, taskset: Option[String]): Future[Widget] = {
+    for {
+      user <- getUser(name)
+      task <- taskRepo.selectTaskToVerify(taskset, user.validations.map(_.task_id))
+      taskset <- tasksetRepo.findById(task.taskset)
+      link <- linkRepo.findById(task.link_id)
+      task <- updateTaskAttributes(task, taskset.get, link.get)
+    } yield Widget(user._id, link.get, task, taskset.get.template)
+  }
+
+  def requestTask(name: String, taskset: Option[String]) = Action.async {
+    implicit request => getWidgetData(name, taskset).map(data => Ok(Json.toJson(data)))
+  }
+
+  def getUser(name: String): Future[User] = {
+    userRepo.search("name", name) flatMap {
+      case users: Traversable[User] if users.nonEmpty => Future(users.head)
+      case _ => userRepo.save(User(UUID.randomUUID(), name))
+    }
+  }
+
+  def isTurn(user: User, evalData: EvalData, ability:Boolean): Boolean = {
+    val timeSinceLastRequest = System.currentTimeMillis() - evalData.timeStamps.head
     val groups = configuration.getLongSeq("veritask.groups").get
-    timeSinceLastRequest > groups(user.group) || user.name == "testUser"
+    timeSinceLastRequest > groups(evalData.group) || user.name == "testUser"
   }
 
   def updateTaskAttributes(
     task: Task, taskset: Taskset, link: Link): Future[Task] = {
-    if ((taskset.subjectAttributesQuery.isDefined && task.subjectAttributes.isEmpty) ||
-    (taskset.objectAttributesQuery.isDefined && task.objectAttributes.isEmpty)) {
       val subQueryString = taskset.subjectAttributesQuery.map(_.replaceAll(
         "\\{\\{\\s*linkSubjectURI\\s*\\}\\}", "<" + link.linkSubject + ">"
       ))
@@ -83,28 +97,32 @@ class Tasks @Inject() (
         "\\{\\{\\s*linkObjectURI\\s*\\}\\}", "<" + link.linkObject + ">"
       ))
       for {
-        subAttributes <- queryAttribute(taskset.subjectEndpoint, subQueryString)
-        objAttributes <- queryAttribute(taskset.objectEndpoint, objQueryString)
+        subAttributes <- queryAttribute(
+          taskset.subjectEndpoint,
+          subQueryString,
+          task.subjectAttributes)
+        objAttributes <- queryAttribute(
+          taskset.objectEndpoint,
+          objQueryString,
+          task.objectAttributes)
         updatedTask = task.copy(
           subjectAttributes = subAttributes,
           objectAttributes = objAttributes)
         savedTask <- taskRepo.save(updatedTask)
       } yield savedTask
-    } else {
-      Future.successful(task)
-    }
   }
 
   def queryAttribute(
     endpointOpt: Option[String],
-    queryStringOpt: Option[String]): Future[Option[Map[String, String]]] = {
+    queryStringOpt: Option[String],
+    attribute: Option[Map[String, String]]): Future[Option[Map[String, String]]] = {
 
     import ops._
     import sparqlHttp.sparqlEngineSyntax._
     import sparqlOps._
 
-    val result = (endpointOpt, queryStringOpt) match {
-      case (Some(endpoint), Some(queryString)) =>
+    val result = (endpointOpt, queryStringOpt, attribute) match {
+      case (Some(endpoint), Some(queryString), None) =>
         val endpointURL = new URL(endpoint)
         for {
           query <- parseSelect(queryString)

@@ -54,7 +54,7 @@ var veritask = function() {
            tasksetOption = "?taskset="+taskset;
         }
         jQuery.getJSON(
-            '@routes.Tasks.getTask("", None).absoluteURL' + user + tasksetOption,
+            '@routes.Tasks.requestTask("", None).absoluteURL' + user + tasksetOption,
             function(data) {
                 if (data !== null) {
                     var templates;
@@ -104,6 +104,6 @@ var veritask = function() {
     }
 
     return {
-        challengeUser: challengeUser,
+        challengeUser: challengeUser
     };
 }(); // We call our anonymous function immediately
