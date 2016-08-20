@@ -1,7 +1,7 @@
 @(implicit request: RequestHeader)
-
 var veritask = function() {
 
+    loadDependency('@routes.Application.javascriptRoutes.absoluteURL');
     loadDependency('@routes.Assets.versioned("lib/jsrender/jsrender.js").absoluteURL');
     loadDependency('@routes.Assets.versioned("lib/node-uuid/uuid.js").absoluteURL');
 
@@ -48,13 +48,9 @@ var veritask = function() {
         });
     }
 
-    function challengeUser(user, taskset, callbackTrue, callbackFalse) {
-        var tasksetOption = "";
-        if (taskset !== "")  {
-           tasksetOption = "?taskset="+taskset;
-        }
+    function challengeUser(user, taskset, callbackTrue, callbackFalse, ability) {
         jQuery.getJSON(
-            '@routes.Tasks.requestTask("", None).absoluteURL' + user + tasksetOption,
+            jsRoutes.controllers.Tasks.requestTaskEval(user, null, ability).absoluteURL(),
             function(data) {
                 if (data !== null) {
                     var templates;

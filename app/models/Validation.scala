@@ -7,6 +7,7 @@ import play.api.libs.json.Json
   */
 case class Validation(
                      task_id: String,
+                     time: Long,
                      value: Boolean
                      )
 object Validation {

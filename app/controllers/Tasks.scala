@@ -8,7 +8,7 @@ import config.ConfigBanana
 import models._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.json.{JsNull, JsString, Json}
+import play.api.libs.json.{JsNull, JsString, JsValue, Json}
 import play.api.mvc.{Action, Controller}
 import services._
 
@@ -31,14 +31,35 @@ class Tasks @Inject() (
                        name: String,
                        taskset: Option[String],
                        ability: Boolean) = Action.async { implicit request =>
-    for {
+    val isUserTurn = for {
       user <- getUser(name)
       evalData <- getEvalData(user)
-      widgetData <- getWidgetData(name, taskset)
-    } yield Ok(Json.toJson(widgetData))
+    } yield isTurn(user, evalData, ability)
+    isUserTurn flatMap {
+      case true => getWidgetData(name, None).map(data => Ok(Json.toJson(data)))
+      case false => Future(Ok(Json.toJson(JsNull)))
+    }
+  }
+
+
+  def isTurn(
+                      user: User,
+                      evalData: EvalData,
+                      ability: Boolean
+                    ): Boolean = {
+    val timeSinceLastRequest = user.validations.nonEmpty match {
+      case true => System.currentTimeMillis() - user.validations.head.time
+      case false => Long.MaxValue
+    }
+    val isForAbility = evalData.group == 2 && ability // Magic number two
+    val isTimed = evalData.group == 1 &&
+        timeSinceLastRequest > evalData.taskDelay &&
+        !ability
+    isForAbility || isTimed
   }
 
   def getEvalData(user: User): Future[EvalData] = {
+    val delayGroups = configuration.getLongSeq("veritask.delays").get
     evalDataRepo.search("user_id", user._id.toString) flatMap {
       case eD: Traversable[EvalData] if eD.nonEmpty =>
         val evalData = eD.head
@@ -50,15 +71,12 @@ class Tasks @Inject() (
           EvalData(
             UUID.randomUUID(),
             user._id,
-            selectGroup,
+            scala.util.Random.nextInt(2),
+            delayGroups(scala.util.Random.nextInt(delayGroups.length)),
             List(System.currentTimeMillis())
           )
         )
     }
-  }
-
-  def selectGroup: Int = {
-    5
   }
 
   def getWidgetData(name: String, taskset: Option[String]): Future[Widget] = {
@@ -82,11 +100,7 @@ class Tasks @Inject() (
     }
   }
 
-  def isTurn(user: User, evalData: EvalData, ability:Boolean): Boolean = {
-    val timeSinceLastRequest = System.currentTimeMillis() - evalData.timeStamps.head
-    val groups = configuration.getLongSeq("veritask.groups").get
-    timeSinceLastRequest > groups(evalData.group) || user.name == "testUser"
-  }
+
 
   def updateTaskAttributes(
     task: Task, taskset: Taskset, link: Link): Future[Task] = {

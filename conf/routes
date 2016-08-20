@@ -16,11 +16,13 @@ POST        /tasksets/:id/uploadLinks                     controllers.Tasksets.u
 
 # Tasks
 GET         /getTask/:user                                controllers.Tasks.requestTask(user: String, taskset: Option[String])
+GET         /getTaskEval/:user                            controllers.Tasks.requestTaskEval(user: String, taskset: Option[String], ability:Boolean)
 
 # Verifications
 POST        /verification                                 controllers.Verifications.processVerificationPost
 
 # Widget
+GET         /javascriptRoutes                             controllers.Application.javascriptRoutes
 GET         /widget                                       controllers.Application.widget
 GET         /widgetHTML                                   controllers.Application.widgetHTML
 

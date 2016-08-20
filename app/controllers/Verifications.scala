@@ -43,7 +43,12 @@ class Verifications @Inject() (
               val validation = verification.value.get && a > 0.5
               addValidation(
                 verification.verifier,
-                Validation(verification.task_id.toString, verification.value.get))
+                Validation(
+                  verification.task_id.toString,
+                  System.currentTimeMillis(),
+                  verification.value.get
+                )
+              )
               Ok(Json.toJson(validation))
             case None => Ok(JsNull)
           }

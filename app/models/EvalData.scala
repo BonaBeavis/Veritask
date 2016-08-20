@@ -10,7 +10,8 @@ import play.api.libs.json.Json
 case class EvalData(
                  _id: UUID,
                  user_id: UUID,
-                 group: Int,
+                 group: Int, //0=NoTasks,1=timed,2=ability
+                 taskDelay: Long,
                  timeStamps: List[Long]
 ) extends MongoEntity
 
