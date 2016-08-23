@@ -72,6 +72,8 @@ var veritask = function() {
                     });
                     jQuery('#vt-template').html(html);
                     jQuery('#veritask').show();
+                } else {
+                    callbackTrue();
                 }
         });
     }

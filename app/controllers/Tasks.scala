@@ -9,11 +9,14 @@ import models._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.{JsNull, JsString, JsValue, Json}
-import play.api.mvc.{Action, Controller}
+import play.api.mvc._
 import services._
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
+
+class UserRequest[A](val user: User, request: Request[A])
+  extends WrappedRequest[A](request)
 
 class Tasks @Inject() (
                         val tasksetRepo: TasksetMongoRepo,
@@ -27,20 +30,43 @@ class Tasks @Inject() (
   with I18nSupport
   with ConfigBanana {
 
-  def requestTaskEval(
-                       name: String,
-                       taskset: Option[String],
-                       ability: Boolean) = Action.async { implicit request =>
-    val isUserTurn = for {
-      user <- getUser(name)
-      evalData <- getEvalData(user)
-    } yield isTurn(user, evalData, ability)
-    isUserTurn flatMap {
-      case true => getWidgetData(name, None).map(data => Ok(Json.toJson(data)))
-      case false => Future(Ok(Json.toJson(JsNull)))
+  def UserAction(name: String) = new ActionRefiner[Request, UserRequest] {
+    def refine[A](input: Request[A]) =
+      userRepo.search("name", name) map {
+        case users: Traversable[User] if users.nonEmpty
+          => Right(new UserRequest(users.head, input))
+        case _ =>
+          val user = User(UUID.randomUUID(), name)
+          userRepo.save(user)
+          Right(new UserRequest(user, input))
+      }
+  }
+
+    def getUser(name: String): Future[User] = {
+    userRepo.search("name", name) flatMap {
+      case users: Traversable[User] if users.nonEmpty => Future(users.head)
+      case _ => userRepo.save(User(UUID.randomUUID(), name))
     }
   }
 
+  def requestTaskEval(name: String, taskset: Option[String], ability: Boolean) =
+    (Action andThen UserAction(name)).async { request =>
+      getEvalData(request.user).map(isTurn(request.user,_, ability)) flatMap {
+        case true =>  getTask(request.user, taskset) flatMap {
+          case Some(t) =>
+            for {
+              link <- linkRepo.findById(t.link_id)
+              taskset <- tasksetRepo.findById(t.taskset)
+            } yield {
+              Ok(Json.toJson(
+                Widget(request.user._id, link.get, t, taskset.get.template)
+              ))
+            }
+          case None => Future.successful(Ok(Json.toJson(JsNull)))
+        }
+        case false => Future.successful(Ok(Json.toJson(JsNull)))
+      }
+    }
 
   def isTurn(
                       user: User,
@@ -71,7 +97,7 @@ class Tasks @Inject() (
           EvalData(
             UUID.randomUUID(),
             user._id,
-            scala.util.Random.nextInt(2),
+            scala.util.Random.nextInt(3),
             delayGroups(scala.util.Random.nextInt(delayGroups.length)),
             List(System.currentTimeMillis())
           )
@@ -79,51 +105,64 @@ class Tasks @Inject() (
     }
   }
 
-  def getWidgetData(name: String, taskset: Option[String]): Future[Widget] = {
-    for {
-      user <- getUser(name)
-      task <- taskRepo.selectTaskToVerify(taskset, user.validations.map(_.task_id))
-      taskset <- tasksetRepo.findById(task.taskset)
-      link <- linkRepo.findById(task.link_id)
-      task <- updateTaskAttributes(task, taskset.get, link.get)
-    } yield Widget(user._id, link.get, task, taskset.get.template)
-  }
+  def requestTask(name: String, taskset: Option[String]) =
+    (Action andThen UserAction(name)).async { request =>
+      getTask(request.user, taskset) flatMap {
+        case Some(t) =>
+          for {
+            link <- linkRepo.findById(t.link_id)
+            taskset <- tasksetRepo.findById(t.taskset)
+          } yield {
+            Ok(Json.toJson(
+              Widget(request.user._id, link.get, t, taskset.get.template)
+            ))
+          }
+        case None => Future.successful(Ok(Json.toJson(JsNull)))
+      }
+    }
 
-  def requestTask(name: String, taskset: Option[String]) = Action.async {
-    implicit request => getWidgetData(name, taskset).map(data => Ok(Json.toJson(data)))
-  }
-
-  def getUser(name: String): Future[User] = {
-    userRepo.search("name", name) flatMap {
-      case users: Traversable[User] if users.nonEmpty => Future(users.head)
-      case _ => userRepo.save(User(UUID.randomUUID(), name))
+  def getTask(
+                     user: User,
+                     taskset: Option[String]
+                   ): Future[Option[Task]] = {
+    taskRepo.selectTaskToVerify(taskset, user.validations.map(_.task_id)) flatMap {
+      case Some(task) => updateTaskAttributes(task) flatMap {
+        case Some(updatedTask) => Future.successful(Some(updatedTask))
+        case None => getTask(user, taskset)
+      }
+      case None => Future.successful(None)
     }
   }
 
-
-
-  def updateTaskAttributes(
-    task: Task, taskset: Taskset, link: Link): Future[Task] = {
-      val subQueryString = taskset.subjectAttributesQuery.map(_.replaceAll(
-        "\\{\\{\\s*linkSubjectURI\\s*\\}\\}", "<" + link.linkSubject + ">"
+  def updateTaskAttributes(task: Task): Future[Option[Task]] = {
+    val updatedTask = for {
+      taskset <- tasksetRepo.findById(task.taskset)
+      link <- linkRepo.findById(task.link_id)
+      subQueryString = taskset.get.subjectAttributesQuery.map(_.replaceAll(
+        "\\{\\{\\s*linkSubjectURI\\s*\\}\\}", "<" + link.get.linkSubject + ">"
       ))
-      val objQueryString = taskset.objectAttributesQuery.map(_.replaceAll(
-        "\\{\\{\\s*linkObjectURI\\s*\\}\\}", "<" + link.linkObject + ">"
+      objQueryString = taskset.get.objectAttributesQuery.map(_.replaceAll(
+        "\\{\\{\\s*linkObjectURI\\s*\\}\\}", "<" + link.get.linkObject + ">"
       ))
-      for {
-        subAttributes <- queryAttribute(
-          taskset.subjectEndpoint,
-          subQueryString,
-          task.subjectAttributes)
-        objAttributes <- queryAttribute(
-          taskset.objectEndpoint,
-          objQueryString,
-          task.objectAttributes)
-        updatedTask = task.copy(
-          subjectAttributes = subAttributes,
-          objectAttributes = objAttributes)
-        savedTask <- taskRepo.save(updatedTask)
-      } yield savedTask
+      subAttributes <- queryAttribute(
+        taskset.get.subjectEndpoint,
+        subQueryString,
+        task.subjectAttributes)
+      objAttributes <- queryAttribute(
+        taskset.get.objectEndpoint,
+        objQueryString,
+        task.objectAttributes)
+    } yield task.copy(
+      subjectAttributes = subAttributes,
+      objectAttributes = objAttributes
+    )
+    updatedTask map {
+      case t:Task if t.objectAttributes.nonEmpty && t.subjectAttributes.nonEmpty
+        => Some(t)
+      case _ =>
+        taskRepo.delete(task._id)
+        None
+    }
   }
 
   def queryAttribute(
@@ -141,11 +180,15 @@ class Tasks @Inject() (
         for {
           query <- parseSelect(queryString)
           solutions <- endpointURL.executeSelect(query, Map())
-          solution = solutions.iterator.next
         } yield {
-          Some(solution.vars.map(a => a -> solution.get(a).toString).toMap)
+          solutions.hasNext match {
+            case true =>
+              val solution = solutions.iterator.next
+              Some(solution.vars.map(a => a -> solution.get(a).toString).toMap)
+            case false => None
+          }
         }
-      case _ => Try(None)
+      case _ => Try(Some(Map(("", ""))))
     }
     result match {
       case Success(attributes) => Future.successful(attributes)

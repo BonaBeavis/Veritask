@@ -21,13 +21,13 @@ trait Repository[E] {
     (implicit ec: ExecutionContext): Future[Traversable[E]]
 
   def findAll()(implicit ec: ExecutionContext): Future[Traversable[E]]
-//
-//  def delete(id: UUID)(implicit ec: ExecutionContext): Future[Try[UUID]]
+
+  def delete(id: UUID)(implicit ec: ExecutionContext): Future[Option[UUID]]
 }
 
 trait TaskRepository extends Repository[Task] {
   def selectTaskToVerify(taskset: Option[String], excludedTasks: List[String] = List())
-    (implicit ec: ExecutionContext): Future[Task]
+    (implicit ec: ExecutionContext): Future[Option[Task]]
 }
 
 trait VerificationRepository extends Repository[Verification] {

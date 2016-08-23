@@ -51,6 +51,13 @@ abstract class MongoRepository[E <: MongoEntity : OWrites : Reads]
   def findAll()(implicit ec: ExecutionContext): Future[Traversable[E]] = {
     col flatMap (_.find(Json.obj()).cursor[E]().collect[List]())
   }
+
+  def delete(uuid: UUID)(implicit ec: ExecutionContext): Future[Option[UUID]] = {
+    col flatMap (_.remove(Json.obj("_id" -> uuid))) map {
+      case wR: WriteResult if wR.ok => Some(uuid)
+      case wR: WriteResult if wR.ok => None
+    }
+  }
 }
 
 class TasksetMongoRepo @Inject()(val reactiveMongoApi: ReactiveMongoApi)
@@ -67,22 +74,24 @@ class TaskMongoRepo @Inject()(val reactiveMongoApi: ReactiveMongoApi)
     reactiveMongoApi.database.map(_.collection[JSONCollection]("tasks"))
 
   override def selectTaskToVerify(taskset: Option[String],
-                                  excludedTasks: List[String])
-    (implicit ec: ExecutionContext): Future[Task] = {
+                                  verifiedTasks: List[String])
+    (implicit ec: ExecutionContext): Future[Option[Task]] = {
 
     import JSONBatchCommands.AggregationFramework.{Match, Sample}
 
-    val queryTasks = Json.obj("_id" -> Json.obj("$nin" -> excludedTasks))
+    val queryTasks = Json.obj("_id" -> Json.obj("$nin" -> verifiedTasks))
 
     taskset match {
       case Some(ts) =>
         val queryTaskset = Json.obj("taskset" -> ts)
         val mmatch = Json.obj("$and" -> Json.arr(queryTasks, queryTaskset))
-        col flatMap (_
-          .aggregate(Match(mmatch), List(Sample(1)))
-          .map(_.head[Task].head))
+        col flatMap (
+          _.aggregate(Match(mmatch), List(Sample(1)))
+          .map(_.head[Task].headOption))
       case None =>
-        col flatMap (_.aggregate(Match(queryTasks), List(Sample(1))).map(_.head[Task].head))
+        col flatMap (
+          _.aggregate(Match(queryTasks), List(Sample(1)))
+          .map(_.head[Task].headOption))
     }
   }
 }

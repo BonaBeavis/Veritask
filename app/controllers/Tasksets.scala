@@ -16,8 +16,8 @@ import services._
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-class TasksetRequest[A](
-  val taskset: Taskset, request: Request[A]) extends WrappedRequest[A](request)
+class TasksetRequest[A](val taskset: Taskset, request: Request[A])
+  extends WrappedRequest[A](request)
 
 @Singleton
 class Tasksets @Inject() (
