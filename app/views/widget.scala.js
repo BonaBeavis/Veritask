@@ -79,7 +79,8 @@ var veritask = function() {
     }
 
     function postVerification(answer, data, callbackTrue, callbackFalse) {
-        var verification = { _id: uuid.v1(), verifier: data.verifier, task_id: data.task._id, value: answer };
+        var d = new Date;
+        var verification = { _id: uuid.v1(), verifier_id: data.verifier, task_id: data.task._id, time: d.getTime(), value: answer };
         jQuery.ajax({
             url:'@routes.Verifications.processVerificationPost.absoluteURL',
             method:"POST",

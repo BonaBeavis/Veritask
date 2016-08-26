@@ -32,28 +32,11 @@ class Verifications @Inject() (
           Json.obj("status" -> "KO", "message" -> JsError.toJson(errors))))
       },
       verification => {
-        val estimation = for {
+        for {
           veri <- verificationRepo.save(verification)
-          est <- validator.process(veri)
-          throwaway <- dumpVerification(veri, est)
-        } yield est
-        estimation map {
-          case a: Double => verification.value match {
-            case Some(b) =>
-              val validation = verification.value.get && a > 0.5
-              addValidation(
-                verification.verifier,
-                Validation(
-                  verification.task_id.toString,
-                  System.currentTimeMillis(),
-                  verification.value.get
-                )
-              )
-              Ok(Json.toJson(validation))
-            case None => Ok(JsNull)
-          }
-          case _ => Ok(Json.toJson("Error validation"))
-        }
+          vali <- validator.validate(veri)
+          user <- addValidation(verification.verifier_id, vali)
+        } yield Ok(Json.toJson(vali.value))
       }
     )
   }
@@ -74,7 +57,7 @@ class Verifications @Inject() (
     } yield turtleWriter.asString(
       VerificationDump(
         verification._id,
-        verification.verifier.toString,
+        verification.verifier_id.toString,
         link.copy(estimation = Some(estimation)),
         verification.value
       ).toPG.graph, "").get

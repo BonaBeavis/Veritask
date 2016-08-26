@@ -1,19 +1,16 @@
 package services
 
-
 import com.google.inject.Inject
-import models.{SimpleValidatorStats, Task, Verification}
-
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-
+import models.{SimpleValidatorStats, Validation, Verification}
 import org.apache.commons.math3.stat.interval.WilsonScoreInterval
-import org.apache.commons.math3.stat.interval.ConfidenceInterval
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 /**
   * Created by beavis on 08.06.16.
   */
 trait Validator {
-  def process(verification: Verification): Future[Double]
+  def validate(verification: Verification): Future[Validation]
 }
 
 class SimpleValidator @Inject()(
@@ -21,8 +18,18 @@ class SimpleValidator @Inject()(
                                  val configuration: play.api.Configuration
                                ) extends Validator {
 
-  override def process(verification: Verification): Future[Double] = {
-    updateStats(verification).map(wilsonScoreCenter(_))
+  override def validate(verification: Verification): Future[Validation] = {
+    updateStats(verification) map {
+      stats => new Validation(
+        verification.task_id,
+        System.currentTimeMillis(),
+        (stats, verification.value) match {
+          case (s, Some(v)) if s.numTrue + s.numFalse > 2 => Some(true)
+          case (s, Some(v)) => Some(v == (wilsonScoreCenter(s) >= 0.5))
+          case (s, None) => None
+        }
+      )
+    }
   }
 
   def updateStats(verification: Verification): Future[SimpleValidatorStats] = {

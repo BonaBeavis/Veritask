@@ -74,7 +74,7 @@ class TaskMongoRepo @Inject()(val reactiveMongoApi: ReactiveMongoApi)
     reactiveMongoApi.database.map(_.collection[JSONCollection]("tasks"))
 
   override def selectTaskToVerify(taskset: Option[String],
-                                  verifiedTasks: List[String])
+                                  verifiedTasks: List[UUID])
     (implicit ec: ExecutionContext): Future[Option[Task]] = {
 
     import JSONBatchCommands.AggregationFramework.{Match, Sample}

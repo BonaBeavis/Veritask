@@ -11,8 +11,9 @@ import scala.language.implicitConversions
 import scala.util.Try
 
 case class Verification(_id: UUID,
-                        verifier: UUID,
+                        verifier_id: UUID,
                         task_id: UUID,
+                        time: Long,
                         value: Option[Boolean]
                        ) extends MongoEntity
 

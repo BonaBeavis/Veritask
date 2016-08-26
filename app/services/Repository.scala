@@ -26,7 +26,7 @@ trait Repository[E] {
 }
 
 trait TaskRepository extends Repository[Task] {
-  def selectTaskToVerify(taskset: Option[String], excludedTasks: List[String] = List())
+  def selectTaskToVerify(taskset: Option[String], excludedTasks: List[UUID] = List())
     (implicit ec: ExecutionContext): Future[Option[Task]]
 }
 
