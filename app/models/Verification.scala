@@ -34,15 +34,14 @@ object VerificationDump extends ConfigBanana {
     import recordBinder._
     import org.w3.banana.syntax._
 
-    val clazz = URI("http://example.com/City#class")
-    implicit val classUris = classUrisFor[VerificationDump](clazz)
+    val veritaskPrefix = "http://www.veritask.de/"
 
-    val _id = property[UUID](foaf("id"))
-    val verifier = property[String](URI("http://purl.org/dc/terms/contributor"))
-    val link= property[Link](foaf("link"))
-    val value = optional[Boolean](foaf("value"))
+    val _id = property[UUID](URI(veritaskPrefix + "verification_id"))
+    val verifier = property[String](URI(veritaskPrefix + "verifier"))
+    val link= property[Link](URI(veritaskPrefix + "link"))
+    val value = optional[Boolean](URI(veritaskPrefix + "value"))
 
     implicit val binder: PGBinder[Rdf, VerificationDump] =
-      pgbWithId[VerificationDump](t => URI("http://example.com/" + t._id))
-        .apply(_id, verifier, link, value)(VerificationDump.apply, VerificationDump.unapply) withClasses classUris
+      pgbWithId[VerificationDump](t => URI(veritaskPrefix + t._id))
+        .apply(_id, verifier, link, value)(VerificationDump.apply, VerificationDump.unapply)
 }

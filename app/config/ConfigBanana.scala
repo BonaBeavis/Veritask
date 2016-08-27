@@ -4,7 +4,7 @@ import java.net.URL
 import java.util.UUID
 
 import org.w3.banana._
-import org.w3.banana.binder.PGBinder
+import org.w3.banana.binder.{LiteralBinder, PGBinder}
 import org.w3.banana.jena._
 
 import scala.concurrent.Future
@@ -24,11 +24,12 @@ trait ConfigBanana
   implicit val binderUUID: PGBinder[Rdf, UUID] = new PGBinder[Rdf, UUID] {
     def fromPG(pointed: PointedGraph[Rdf]): Try[UUID] = Try(UUID.randomUUID())
 
-    def toPG(uuid: UUID): PointedGraph[Rdf] = (
-      bnode("betehess")
-        -- foaf.name ->- uuid.toString
-      )
+    def toPG(uuid: UUID): PointedGraph[Rdf] =
+      bnode -- foaf.name ->- uuid.toString
+    xsd.long
   }
+
+
 }
 
 

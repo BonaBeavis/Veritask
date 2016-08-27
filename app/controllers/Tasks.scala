@@ -86,12 +86,17 @@ class Tasks @Inject() (
 
   def getEvalData(user: User): Future[EvalData] = {
     val delayGroups = configuration.getLongSeq("veritask.delays").get
+    val window = configuration.getLong("veritask.window").get
     evalDataRepo.search("user_id", user._id.toString) flatMap {
       case eD: Traversable[EvalData] if eD.nonEmpty =>
         val evalData = eD.head
-        val stampedEvalData = evalData.copy(
-          timeStamps = System.currentTimeMillis() :: evalData.timeStamps)
-        evalDataRepo.save(stampedEvalData)
+        val now = System.currentTimeMillis()
+        val periodLastTimestamp = now - evalData.timeStamps.head
+        val playPeriod = if (periodLastTimestamp < window) periodLastTimestamp else 0L
+        evalDataRepo.save(evalData.copy(
+          timeStamps = now :: evalData.timeStamps,
+          timePlayed = evalData.timePlayed + playPeriod
+        ))
       case _ =>
         evalDataRepo.save(
           EvalData(
