@@ -79,10 +79,10 @@ class Tasksets @Inject() (
               None,
               None))
             for {
-              linkS <- Future.sequence(links.map(linkRepo.save))
-              taskS <- Future.sequence(tasks.map(taskRepo.save))
+              numLinksSaved <- linkRepo.bulkSave(links.toSeq)
+              numTasksSaved <- taskRepo.bulkSave(tasks.toSeq)
             } yield Ok(
-              taskS.size + " Tasks upserted, " + linkS.size + " Links upserted")
+              numLinksSaved + " Tasks upserted, " + numTasksSaved + " Links upserted")
           case Failure(failure) => Future.successful(
             BadRequest("File could not be parsed"))
         }
@@ -103,7 +103,7 @@ class Tasksets @Inject() (
     val s = subject.toString()
     val p = predicate.toString()
     val o = objectt.toString()
-    val uuid = UUID.nameUUIDFromBytes((s + p + o).getBytes)
+    val uuid = UUID.randomUUID()
     Link(uuid, s, p, o, None)
   }
 }

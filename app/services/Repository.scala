@@ -10,6 +10,8 @@ trait Repository[E] {
 
   def save(entity: E)(implicit ec: ExecutionContext): Future[E]
 
+  def bulkSave(entities: Seq[E])(implicit ec: ExecutionContext): Future[Int]
+
   def findById(id: UUID)(implicit ec: ExecutionContext): Future[Option[E]]
 
   def findById()(implicit ec: ExecutionContext): Future[Option[E]]

@@ -6,7 +6,7 @@ import com.google.inject.Inject
 import models.{SimpleValidatorStats, User, _}
 import play.api.libs.json.{Json, OWrites, Reads}
 import play.modules.reactivemongo.ReactiveMongoApi
-import reactivemongo.api.commands.WriteResult
+import reactivemongo.api.commands.{MultiBulkWriteResult, WriteResult}
 import reactivemongo.play.json._
 import reactivemongo.play.json.collection.{JSONBatchCommands, JSONCollection}
 
@@ -25,6 +25,16 @@ abstract class MongoRepository[E <: MongoEntity : OWrites : Reads]
       case success: WriteResult if success.ok => entity
       case failure: WriteResult => throw new Exception(failure.message)
     })
+  }
+
+  def bulkSave(entities: Seq[E])(implicit ec: ExecutionContext): Future[Int] = {
+    col flatMap { collection =>
+      val documents = entities.map(implicitly[collection.ImplicitlyDocumentProducer](_))
+      collection.bulkInsert(ordered = true)(documents: _*).map {
+        case success: MultiBulkWriteResult if success.ok => success.n
+        case failure: MultiBulkWriteResult => throw new Exception(failure.errmsg.get)
+      }
+    }
   }
 
   def findById(id: UUID)(implicit ec: ExecutionContext): Future[Option[E]] = {

@@ -26,7 +26,6 @@ trait ConfigBanana
 
     def toPG(uuid: UUID): PointedGraph[Rdf] =
       bnode -- foaf.name ->- uuid.toString
-    xsd.long
   }
 
 

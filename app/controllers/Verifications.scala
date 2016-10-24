@@ -45,6 +45,7 @@ class Verifications @Inject() (
     userRepo.findById(userId) flatMap {
       case Some(u) => userRepo.save(
         u.copy(validations = validation :: u.validations))
+      case None => throw new Exception("Non existing user validated")
     }
   }
 
