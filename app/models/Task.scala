@@ -8,7 +8,7 @@ import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.indexes.{Index, IndexType}
 
 case class Task(_id: UUID,
-                taskset: UUID,
+                taskset_id: UUID,
                 link_id: UUID,
                 subjectAttributes: Option[Map[String, String]],
                 objectAttributes: Option[Map[String, String]]

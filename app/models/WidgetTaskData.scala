@@ -7,13 +7,13 @@ import play.api.libs.json.Json
 /**
   * Created by beavis on 18.08.16.
   */
-case class Widget (
+case class WidgetTaskData(
                   verifier: UUID,
                   link: Link,
                   task: Task,
                   template: String
                   )
 
-object Widget {
-  implicit val evalDataFormat = Json.format[Widget]
+object WidgetTaskData {
+  implicit val evalDataFormat = Json.format[WidgetTaskData]
 }

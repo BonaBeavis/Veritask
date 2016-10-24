@@ -1,17 +1,18 @@
 package config
 
-import java.net.URL
 import java.util.UUID
 
 import org.w3.banana._
-import org.w3.banana.binder.{LiteralBinder, PGBinder}
+import org.w3.banana.binder.PGBinder
 import org.w3.banana.jena._
 
-import scala.concurrent.Future
 import scala.util.Try
 
-/**
-  * Created by beavis on 02.12.15.
+/** Provides the configuration for banana-rdf and implicits for RDF bindings.
+  *
+  * Classes handling RDF mixin this trait.
+  * By changing the Module from which this trait extends. The RDF implementation
+  * can be changed.
   */
 trait ConfigBanana
   extends JenaModule {
@@ -20,15 +21,17 @@ trait ConfigBanana
   val rdf = RDFPrefix[Rdf]
 
   import ops._
-  import recordBinder._
+
+  /** Provides a RDF-binding for UUIDs.
+    *
+    * TODO: Mapping RDF-node to MongoID to scala case class _id attribute.
+    */
   implicit val binderUUID: PGBinder[Rdf, UUID] = new PGBinder[Rdf, UUID] {
     def fromPG(pointed: PointedGraph[Rdf]): Try[UUID] = Try(UUID.randomUUID())
 
     def toPG(uuid: UUID): PointedGraph[Rdf] =
       bnode -- foaf.name ->- uuid.toString
   }
-
-
 }
 
 

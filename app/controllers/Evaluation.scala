@@ -12,8 +12,7 @@ import services._
 
 import scala.concurrent.Future
 
-/**
-  * Created by beavis on 26.08.16.
+/** Provides helper function for the evaluation.
   */
 class Evaluation @Inject()(
                             val evalDataRepo: EvalDataRepo,

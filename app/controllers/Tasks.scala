@@ -15,9 +15,13 @@ import services._
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
+// Request with added user instance
 class UserRequest[A](val user: User, request: Request[A])
   extends WrappedRequest[A](request)
 
+/** Handles the
+  *
+  */
 class Tasks @Inject() (
                         val tasksetRepo: TasksetMongoRepo,
                         val taskRepo: TaskMongoRepo,
@@ -30,6 +34,9 @@ class Tasks @Inject() (
   with I18nSupport
   with ConfigBanana {
 
+  /** Adds user instance to request, creates new user instance if none with the
+    * specified name exists.
+    */
   def UserAction(name: String) = new ActionRefiner[Request, UserRequest] {
     def refine[A](input: Request[A]) =
       userRepo.search("name", name) map {
@@ -42,24 +49,30 @@ class Tasks @Inject() (
       }
   }
 
-    def getUser(name: String): Future[User] = {
-    userRepo.search("name", name) flatMap {
-      case users: Traversable[User] if users.nonEmpty => Future(users.head)
-      case _ => userRepo.save(User(UUID.randomUUID(), name))
-    }
-  }
-
-  def requestTaskEval(name: String, taskset: Option[String], ability: Boolean) =
+  /** Provides a task for a user. Optionally from a specific taskset.
+    *
+    * This function is a "override" for the requestTask function in context of
+    * thesis's evaluation. The MonsterMinigame simply requests task every
+    * x seconds and every time a player uses a ability. These requests are used
+    * to track the play time of a player. Tasks are only served, when it is the
+    * player's turn.
+    *
+    * @param name the player's name
+    * @param taskset_id if provided, select a task from this taskset
+    * @param ability was the task request from the MosterMinigame triggered by
+    *                a ability
+    */
+  def requestWidgetTaskDataEval(name: String, taskset_id: Option[String], ability: Boolean) =
     (Action andThen UserAction(name)).async { request =>
-      getEvalData(request.user).map(isTurn(request.user,_, ability)) flatMap {
-        case true =>  getTask(request.user, taskset) flatMap {
-          case Some(t) =>
+      getEvalData(request.user).map(isTurn(request.user, _, ability)) flatMap {
+        case true =>  getTask(request.user, taskset_id) flatMap {
+          case Some(task) =>
             for {
-              link <- linkRepo.findById(t.link_id)
-              taskset <- tasksetRepo.findById(t.taskset)
+              link <- linkRepo.findById(task.link_id)
+              taskset <- tasksetRepo.findById(task.taskset_id)
             } yield {
               Ok(Json.toJson(
-                Widget(request.user._id, link.get, t, taskset.get.template)
+                WidgetTaskData(request.user._id, link.get, task, taskset.get.template)
               ))
             }
           case None => Future.successful(Ok(Json.toJson(JsNull)))
@@ -68,13 +81,20 @@ class Tasks @Inject() (
       }
     }
 
-  def isTurn(
-                      user: User,
-                      evalData: EvalData,
-                      ability: Boolean
-                    ): Boolean = {
-    val timeSinceLastRequest = user.validations.nonEmpty match {
-      case true => System.currentTimeMillis() - user.validations.head.time
+  /** Checks if it users turn to get a task.
+    *
+    * This is a helper function for the evaluation.
+    * Group 0: No Tasks, Group 1: Task every x seconds, Group 3: Solve task for
+    * using ability.
+    *
+    * @param player the player's instance
+    * @param evalData data about the player for the evaluation
+    * @param ability was the task request from the MosterMinigame triggered by
+    *                a ability
+    */
+  def isTurn(player: User, evalData: EvalData, ability: Boolean): Boolean = {
+    val timeSinceLastRequest = player.validations.nonEmpty match {
+      case true => System.currentTimeMillis() - player.validations.head.time
       case false => Long.MaxValue
     }
     val isForAbility = evalData.group == 2 && ability // Magic number two
@@ -84,15 +104,23 @@ class Tasks @Inject() (
     isForAbility || isTimed
   }
 
+  /** Gets and updates the evaluation data for the user. Creates new evalData
+    * instance if none exists.
+    *
+    * @param user: the user's instance
+    * @return A EvalData future
+    */
   def getEvalData(user: User): Future[EvalData] = {
+    // How many seconds should be between tasks
     val delayGroups = configuration.getLongSeq("veritask.delays").get
-    val window = configuration.getLong("veritask.window").get
+    // Time between request > inactiveThreshold and user counts as inactive
+    val inactiveThreshold = configuration.getLong("veritask.inactiveThreshold").get
     evalDataRepo.search("user_id", user._id.toString) flatMap {
       case eD: Traversable[EvalData] if eD.nonEmpty =>
         val evalData = eD.head
         val now = System.currentTimeMillis()
-        val periodLastTimestamp = now - evalData.timeStamps.head
-        val playPeriod = if (periodLastTimestamp < window) periodLastTimestamp else 0L
+        val timeSinceLastTimestamp = now - evalData.timeStamps.head
+        val playPeriod = if (timeSinceLastTimestamp < inactiveThreshold) timeSinceLastTimestamp else 0L
         evalDataRepo.save(evalData.copy(
           timeStamps = now :: evalData.timeStamps,
           timePlayed = evalData.timePlayed + playPeriod
@@ -110,26 +138,33 @@ class Tasks @Inject() (
     }
   }
 
-  def requestTask(name: String, taskset: Option[String]) =
+  /** Provides a task for a user. Optionally from a specific taskset.
+    *
+    * @param name the player's name
+    * @param taskset_id if provided, select a task from this taskset
+    *
+    * TODO: Get widgetdata in own function, eleminate getTask
+    */
+  def requestWidgetTaskData(name: String, taskset_id: Option[String]) =
     (Action andThen UserAction(name)).async { request =>
-      getTask(request.user, taskset) flatMap {
+      getTask(request.user, taskset_id) flatMap {
         case Some(t) =>
           for {
             link <- linkRepo.findById(t.link_id)
-            taskset <- tasksetRepo.findById(t.taskset)
+            taskset <- tasksetRepo.findById(t.taskset_id)
           } yield {
             Ok(Json.toJson(
-              Widget(request.user._id, link.get, t, taskset.get.template)
+              WidgetTaskData(request.user._id, link.get, t, taskset.get.template)
             ))
           }
         case None => Future.successful(Ok(Json.toJson(JsNull)))
       }
     }
 
-  def getTask(
-                     user: User,
-                     taskset: Option[String]
-                   ): Future[Option[Task]] = {
+  /** Provides a task for a user. Optionally from a specific taskset.
+    *
+    */
+  def getTask( user: User, taskset: Option[String] ): Future[Option[Task]] = {
     taskRepo.selectTaskToVerify(taskset, user.validations.map(_.task_id)) flatMap {
       case Some(task) => updateTaskAttributes(task) flatMap {
         case Some(updatedTask) => Future.successful(Some(updatedTask))
@@ -139,21 +174,30 @@ class Tasks @Inject() (
     }
   }
 
+  /** Tries to fill the tasks attributes with data by executing the sparql
+    * query, provided by the taskset, against the tasks subject and object. If
+    * the query returns no data for either, deletes the task.
+    *
+    * @param task the task to update
+    * @return A future of the updated task if successful. A future of a None if
+    *         no attribute data was found.
+    */
   def updateTaskAttributes(task: Task): Future[Option[Task]] = {
     val updatedTask = for {
-      taskset <- tasksetRepo.findById(task.taskset)
+      taskset <- tasksetRepo.findById(task.taskset_id)
       link <- linkRepo.findById(task.link_id)
+      // Substitute the placeholder with the actual subject and object URI of the Task.
       subQueryString = taskset.get.subjectAttributesQuery.map(_.replaceAll(
         "\\{\\{\\s*linkSubjectURI\\s*\\}\\}", "<" + link.get.linkSubject + ">"
       ))
       objQueryString = taskset.get.objectAttributesQuery.map(_.replaceAll(
         "\\{\\{\\s*linkObjectURI\\s*\\}\\}", "<" + link.get.linkObject + ">"
       ))
-      subAttributes <- queryAttribute(
+      subAttributes <- queryAttributes(
         taskset.get.subjectEndpoint,
         subQueryString,
         task.subjectAttributes)
-      objAttributes <- queryAttribute(
+      objAttributes <- queryAttributes(
         taskset.get.objectEndpoint,
         objQueryString,
         task.objectAttributes)
@@ -170,16 +214,38 @@ class Tasks @Inject() (
     }
   }
 
-  def queryAttribute(
-    endpointOpt: Option[String],
-    queryStringOpt: Option[String],
-    attribute: Option[Map[String, String]]): Future[Option[Map[String, String]]] = {
+  /** Queries attributes, by executing a sparql query against an endpoint. This
+    * will only happen if a endpiont and a query exists. Additionally attributes
+    * should be None, to be sure that those attributes wont get queried multiple
+    * times.
+    *
+    *
+    * @param endpointOpt a sparql enpoint
+    * @param queryStringOpt the query to execute
+    * @param attributes attributes of the ressource
+    *
+    * @return A map with empty strings, if endpoint or query are not defined.
+    *
+    * For example, the query:
+    * {{{
+    *   select distinct ?label ?title where {
+    *     {{ linkObjectURI }} rdfs:label ?label.
+    *     {{ linkObjectURI }} rdfs:titel ?titel
+    *   }
+    * }}}
+    * Would return a map like (label => QUERIED_LABEL_VALUE, titel => QUERIED_TITEL_VALUE)
+    */
+  def queryAttributes(
+                       endpointOpt: Option[String],
+                       queryStringOpt: Option[String],
+                       attributes: Option[Map[String, String]]
+                     ): Future[Option[Map[String, String]]] = {
 
     import ops._
     import sparqlHttp.sparqlEngineSyntax._
     import sparqlOps._
 
-    val result = (endpointOpt, queryStringOpt, attribute) match {
+    val result = (endpointOpt, queryStringOpt, attributes) match {
       case (Some(endpoint), Some(queryString), None) =>
         val endpointURL = new URL(endpoint)
         for {

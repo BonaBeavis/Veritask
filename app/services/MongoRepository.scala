@@ -93,7 +93,7 @@ class TaskMongoRepo @Inject()(val reactiveMongoApi: ReactiveMongoApi)
 
     taskset match {
       case Some(ts) =>
-        val queryTaskset = Json.obj("taskset" -> ts)
+        val queryTaskset = Json.obj("taskset_id" -> ts)
         val mmatch = Json.obj("$and" -> Json.arr(queryTasks, queryTaskset))
         col flatMap (
           _.aggregate(Match(mmatch), List(Sample(1)))
