@@ -4,7 +4,7 @@ import java.util.UUID
 import javax.inject.Inject
 
 import config.ConfigBanana
-import models.{Validation, Verification, VerificationDump}
+import models.{User, Validation, Verification, VerificationDump}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.{JsError, JsNull, Json}
@@ -14,6 +14,10 @@ import services.{SimpleValidator, _}
 
 import scala.concurrent.Future
 
+/** Handles everything after the widget transmits a verification. Adds the
+  * verification to the database. Handles the validation of the verification and
+  * dumps the verification to a spqrql endpoint.
+  */
 class Verifications @Inject() (
                                 val verificationRepo: VerificationMongoRepo,
                                 val userRepo: UserMongoRepo,
@@ -23,6 +27,12 @@ class Verifications @Inject() (
                                 val configuration: play.api.Configuration)
   extends Controller with I18nSupport with ConfigBanana {
 
+  /** Prcesses a verification.
+    *
+    * @return a JSON boolean wrapped in a request. True if the user verified
+    *         correctly, false if not, undefined if not enough verifications of
+    *         this task exist to determine the correctness.
+    */
   def processVerificationPost() = Action.async(BodyParsers.parse.json) {
     request =>
     val verification = request.body.validate[Verification]
@@ -41,8 +51,15 @@ class Verifications @Inject() (
     )
   }
 
-  def addValidation(userId: UUID, validation: Validation) = {
-    userRepo.findById(userId) flatMap {
+  /** Adds a validation to a user instance
+    *
+    * @param userID UUID of the user
+    * @param validation validation to add
+    *
+    * @return Future of the user with the validation added
+    */
+  def addValidation(userID: UUID, validation: Validation): Future[User] = {
+    userRepo.findById(userID) flatMap {
       case Some(u) => userRepo.save(
         u.copy(validations = validation :: u.validations))
       case None => throw new Exception("Non existing user validated")

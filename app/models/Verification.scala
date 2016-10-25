@@ -10,6 +10,10 @@ import play.api.libs.json.Json
 import scala.language.implicitConversions
 import scala.util.Try
 
+/** Describes a verification of a task by a user.
+  *
+  * @param time unix time in milliseconds
+  */
 case class Verification(_id: UUID,
                         verifier_id: UUID,
                         task_id: UUID,
@@ -21,6 +25,9 @@ object Verification extends ConfigBanana {
   implicit val verificationFormat = Json.format[Verification]
 }
 
+/** Binds verification case class to rdf. Unfinished
+  *
+  */
 case class VerificationDump(
                           _id: UUID,
                           verifier: String,

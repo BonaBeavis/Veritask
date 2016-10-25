@@ -6,27 +6,46 @@ import org.apache.commons.math3.stat.interval.WilsonScoreInterval
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-/**
-  * Created by beavis on 08.06.16.
+/** Validates a verification. To give feedback to the widget if the user
+  * verified "right". It is not known if a link is correct, so the correctness
+  * must be estimated.
   */
 trait Validator {
   def validate(verification: Verification): Future[Validation]
 }
 
+/** Implements a estimation based on a wilson score.
+  * Estimation is based on the the agreements of all users.
+  *
+  * If the lower bound of the wilson score is higher than 0.5, we can assume
+  * with a confidence = (intervalconfidence + 1)/2 that the majority of users
+  * think the link is true.
+  *
+  * Analog with false
+  *
+  * If the sample is too small to reach either condition, the verification is
+  * validated as true. We dont want to punish the user, just because he verified
+  * a new link.
+  */
 class SimpleValidator @Inject()(
                                  val simpleValidatorStatsRepo: SimpleValidatorStatsMongoRepo,
                                  val configuration: play.api.Configuration
                                ) extends Validator {
-
+  /** @return True if not enough verifications for a estimation exists.
+    *
+    */
   override def validate(verification: Verification): Future[Validation] = {
     updateStats(verification) map {
       stats => new Validation(
         verification.task_id,
         System.currentTimeMillis(),
-        (stats, verification.value) match {
-          case (s, Some(v)) if s.numTrue + s.numFalse > 2 => Some(true)
-          case (s, Some(v)) => Some(v == (wilsonScoreCenter(s) >= 0.5))
-          case (s, None) => None
+        (wilsonEstimation(stats), verification.value) match {
+          // Not enough verifications and user gave a value => gift true
+          case (None, Some(v)) => Some(true)
+          // If enough verifications for a estimation exist and user gave a value
+          case (Some(wE), Some(v)) => Some(wE == v)
+          // No verification, no validation
+          case (_, None) => None
         }
       )
     }
@@ -48,11 +67,20 @@ class SimpleValidator @Inject()(
     } yield updatedStats
   }
 
-  def wilsonScoreCenter(stats: SimpleValidatorStats) = {
+  def wilsonEstimation(stats: SimpleValidatorStats): Option[Boolean] = {
     val confidence = configuration.getDouble("veritask.confidence").get
     def wilsonScoreInterval = new WilsonScoreInterval
     def interval = wilsonScoreInterval.createInterval(
       stats.numTrue + stats.numFalse, stats.numTrue, confidence)
-    (interval.getLowerBound + interval.getUpperBound) / 2
+
+    if (interval.getLowerBound > 0.5) {
+      Some(true)
+    }
+    else if (interval.getUpperBound < 0.5) {
+      Some(false)
+    }
+    else {
+      None
+    }
   }
 }

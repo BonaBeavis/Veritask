@@ -41,21 +41,9 @@ abstract class MongoRepository[E <: MongoEntity : OWrites : Reads]
     col flatMap (_.find(Json.obj("_id" -> id.toString)).one[E])
   }
 
-  def findById()(implicit ec: ExecutionContext): Future[Option[E]] = {
-    col flatMap (_.find(Json.obj()).one[E])
-  }
-
   def search(name: String, value: String)
     (implicit ec: ExecutionContext): Future[Traversable[E]] = {
     col flatMap (_.find(Json.obj(name -> value)).cursor[E]().collect[List]())
-  }
-
-  def search(name: String, values: Traversable[String])
-            (implicit ec: ExecutionContext): Future[Traversable[E]] = {
-    col flatMap (_
-      .find(Json.obj(name -> Json.obj("$in" -> values)))
-      .cursor[E]()
-      .collect[List]())
   }
 
   def findAll()(implicit ec: ExecutionContext): Future[Traversable[E]] = {

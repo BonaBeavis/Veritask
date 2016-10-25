@@ -6,6 +6,12 @@ import java.util.UUID
 import org.w3.banana.binder.PGBinder
 import play.api.libs.json.Json
 
+/** Describes a link.
+  *
+  * @param estimation Meaning depends on the implementation of
+  *                   [[services.Validator]]. for now it is the center of a
+  *                   wilson score estimation.
+  */
 case class Link(_id: UUID,
                 linkSubject: String,
                 predicate: String,

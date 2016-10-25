@@ -7,6 +7,9 @@ import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.indexes.{Index, IndexType}
 
+/** Stores the queried attributes for templating a link.
+  *
+  */
 case class Task(_id: UUID,
                 taskset_id: UUID,
                 link_id: UUID,

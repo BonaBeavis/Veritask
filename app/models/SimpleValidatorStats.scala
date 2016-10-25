@@ -4,8 +4,12 @@ import java.util.UUID
 
 import play.api.libs.json.Json
 
-/**
-  * Created by beavis on 08.06.16.
+/** Tracks the verifications for a tasks.
+  *
+  * @param task_id UUID of the task for which the stats are collected
+  * @param numTrue times a user verified the task as true
+  * @param numFalse times a user verified the task as false
+  * @param numNoValue times a user did not verify the task
   */
 case class SimpleValidatorStats(
                                _id: UUID = UUID.randomUUID(),

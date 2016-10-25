@@ -4,8 +4,7 @@ import java.util.UUID
 
 import play.api.libs.json.Json
 
-/**
-  * Created by beavis on 18.05.16.
+/** Entities to be persisted to MongoDB must extend from this class.
   */
 abstract class MongoEntity {
   val _id: UUID

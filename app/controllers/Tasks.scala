@@ -19,8 +19,8 @@ import scala.util.{Failure, Success, Try}
 class UserRequest[A](val user: User, request: Request[A])
   extends WrappedRequest[A](request)
 
-/** Handles the
-  *
+/** Serves, updates, selects tasks to verifiy. During evaluation this controller
+  * additionally collects data about the users.
   */
 class Tasks @Inject() (
                         val tasksetRepo: TasksetMongoRepo,
@@ -222,7 +222,7 @@ class Tasks @Inject() (
     *
     * @param endpointOpt a sparql enpoint
     * @param queryStringOpt the query to execute
-    * @param attributes attributes of the ressource
+    * @param attributes attributes of the resource
     *
     * @return A map with empty strings, if endpoint or query are not defined.
     *

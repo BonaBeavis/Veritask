@@ -4,14 +4,13 @@ import java.util.UUID
 
 import play.api.libs.json.Json
 
-/**
-  * Created by beavis on 18.08.16.
+/**  Task data send to widget.
   */
 case class WidgetTaskData(
-                  verifier: UUID,
-                  link: Link,
-                  task: Task,
-                  template: String
+                           verifier_id: UUID,
+                           link: Link,
+                           task: Task,
+                           template: String
                   )
 
 object WidgetTaskData {

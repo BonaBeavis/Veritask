@@ -8,8 +8,9 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import services._
 
-/**
-  * Created by beavis on 26.08.16.
+/** Renders a view with all the links a user has verified.
+  *
+  * TODO: finish the stump
   */
 class Users @Inject() (
                         val userRepo: UserMongoRepo,

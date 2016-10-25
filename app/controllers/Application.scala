@@ -32,7 +32,7 @@ class Application @Inject()(val messagesApi: MessagesApi)
   def javascriptRoutes = Action { implicit request =>
     Ok(
       JavaScriptReverseRouter("jsRoutes")(
-        routes.javascript.Tasks.requestTaskEval,
+        routes.javascript.Tasks.requestWidgetTaskDataEval,
         routes.javascript.Assets.versioned
       )
     ).as("text/javascript")

@@ -4,8 +4,7 @@ import java.util.UUID
 
 import play.api.libs.json.Json
 
-/**
-  * Created by beavis on 06.06.16.
+/** "correctness" of a verification
   */
 case class Validation(
                      task_id: UUID,
