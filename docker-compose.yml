@@ -3,16 +3,25 @@ version: '2'
 services:
 
   veritask:
-    image: bonarbeavis/veritask
+    build: .
+    volumes:
+      - ./:/home/veritask
     ports:
-      - "9000:9000"
+      - 9000:9000
+    links:
+      - mongo
+      - fuseki
+    restart: always
+    command: target/universal/stage/bin/veritask -Dplay.crypto.secret=abcdefghijk
 
   mongo:
     image: mongo
-    ports:
-      - "27017:27017"
+    volumes:
+      - ./../database:/data/db
+    restart: always
 
   fuseki:
     image: stain/jena-fuseki
     ports:
       - "3030:3030"
+    restart: always
