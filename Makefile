@@ -19,3 +19,7 @@ rebuild-container:
 start-dev:
 	docker-compose -f docker-compose-dev.yml up -d
 	sbt run
+
+clean-dev:
+	docker-compose -f docker-compose-dev.yml stop
+	docker-compose -f docker-compose-dev.yml rm -f

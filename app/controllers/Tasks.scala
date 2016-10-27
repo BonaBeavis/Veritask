@@ -125,16 +125,30 @@ class Tasks @Inject() (
           timeStamps = now :: evalData.timeStamps,
           timePlayed = evalData.timePlayed + playPeriod
         ))
-      case _ =>
-        evalDataRepo.save(
-          EvalData(
-            UUID.randomUUID(),
-            user._id,
-            scala.util.Random.nextInt(3),
-            delayGroups(scala.util.Random.nextInt(delayGroups.length)),
-            List(System.currentTimeMillis())
+      case _ => user.name match {
+        case "noTasks" =>
+          evalDataRepo.save(
+            EvalData(UUID.randomUUID(), user._id, 0, 20, List(System.currentTimeMillis()))
           )
-        )
+        case "timedTasks" =>
+          evalDataRepo.save(
+            EvalData( UUID.randomUUID(), user._id, 1, 20, List(System.currentTimeMillis()))
+          )
+        case "abilityTasks" =>
+          evalDataRepo.save(
+            EvalData( UUID.randomUUID(), user._id, 2, 20, List(System.currentTimeMillis()))
+          )
+        case _ =>
+          evalDataRepo.save(
+            EvalData(
+              UUID.randomUUID(),
+              user._id,
+              scala.util.Random.nextInt(3),
+              delayGroups(scala.util.Random.nextInt(delayGroups.length)),
+              List(System.currentTimeMillis())
+            )
+          )
+      }
     }
   }
 

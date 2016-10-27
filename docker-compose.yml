@@ -12,7 +12,7 @@ services:
       - mongo
       - fuseki
     restart: always
-    command: target/universal/stage/bin/veritask -Dplay.crypto.secret=abcdefghijk
+    command: target/universal/stage/bin/veritask -Dplay.crypto.secret=abcdefghijk -Dconfig.resource=prod.conf
 
   mongo:
     image: mongo
