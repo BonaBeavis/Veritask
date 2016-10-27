@@ -1,3 +1,0 @@
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
-
-<http://dbpedia.org/resource/Common_chimpanzee> owl:sameAs <http://www.bbc.co.uk/nature/species/Common_Chimpanzee#species> .

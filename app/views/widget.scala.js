@@ -50,7 +50,7 @@ var veritask = function() {
 
     function challengeUser(user, taskset, callbackTrue, callbackFalse, ability) {
         jQuery.getJSON(
-            jsRoutes.controllers.Tasks.requestTaskEval(user, null, ability).absoluteURL(),
+            jsRoutes.controllers.Tasks.requestWidgetTaskDataEval(user, null, ability).absoluteURL(),
             function(data) {
                 if (data !== null) {
                     var templates;

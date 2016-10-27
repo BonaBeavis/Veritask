@@ -1,4 +1,4 @@
-start-staging:
+start-staging: package-staging
 	mkdir -p ./../database
 	docker-compose up --force-recreate
 
