@@ -99,7 +99,7 @@ class Tasks @Inject() (
     }
     val isForAbility = evalData.group == 2 && ability // Magic number two
     val isTimed = evalData.group == 1 &&
-        timeSinceLastRequest > evalData.taskDelay &&
+        timeSinceLastRequest > evalData.taskDelay * 1000 &&
         !ability
     isForAbility || isTimed
   }
@@ -273,6 +273,7 @@ class Tasks @Inject() (
             case false => None
           }
         }
+      case (Some(endpoint), Some(queryString), Some(attr)) => Try(Some(attr))
       case _ => Try(Some(Map(("", ""))))
     }
     result match {
