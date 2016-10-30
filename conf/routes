@@ -4,7 +4,7 @@
 # Note: @controllers syntax signifies the actual controller instance, retrieved via GlobalSettings.getController().
 # ~~~~
 
-# Frontend
+# Index page
 GET         /                                             controllers.Application.index
 
 GET         /taskset                                      controllers.Tasksets.tasksetView
@@ -29,8 +29,9 @@ GET         /widgetHTML                                   controllers.Applicatio
 # Users
 GET         /users/:name                                  controllers.Users.stats(name: String)
 
-GET         /eval/playTime                                controllers.Evaluation.playTime
-GET         /eval/verifications                           controllers.Evaluation.verifications
+GET         /veriEvalData                                 controllers.Evaluation.veriEvalData
+GET         /userEvalData                                 controllers.Evaluation.userEvalData
+GET         /taskEvalData                                 controllers.Evaluation.taskEvalData(group: Int, confidence: Option[Double])
 
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file                                 controllers.Assets.versioned(path="/public", file: Asset)

@@ -12,33 +12,130 @@ import services._
 
 import scala.concurrent.Future
 
+case class UserEvalData(
+                         user: UUID,
+                         group: Int,
+                         timePlayed: Long,
+                         numVeriTrue: Option[Int],
+                         numVeriFalse: Option[Int],
+                         numVeriUnsure: Option[Int]
+                       )
+
+case class VeriEvalData(
+                         veri: UUID,
+                         value: Option[Boolean],
+                         task: UUID,
+                         group: Int,
+                         gold: Boolean
+                       )
+
+// Task, Agreement, Gruppe, Verification(Gold)
+case class TaskEvalData(
+                         task: UUID,
+                         agreement: Option[Boolean],
+                         group: Int,
+                         gold: Boolean
+                       )
 /** Provides helper function for the evaluation.
   */
 class Evaluation @Inject()(
                             val evalDataRepo: EvalDataRepo,
                             val verificationRepo: VerificationMongoRepo,
+                            val valiStatsRepo: SimpleValidatorStatsMongoRepo,
+                            val validator: SimpleValidator,
                             val messagesApi: MessagesApi
                           )
   extends Controller with I18nSupport {
 
-  case class EvalPlaytime(user: UUID, group: Int, timePlayed: Long)
-  implicit val evalFormat = Json.format[EvalPlaytime]
 
-  def playTime = Action.async {
-    evalDataRepo.findAll.map(_.map(
-      evalData => EvalPlaytime(
-        evalData.user_id, evalData.group, evalData.timePlayed
-      )
-    )).map(r => Ok(Json.toJson(r)))
+  implicit val userEvalDataFormat = Json.format[UserEvalData]
+  implicit val veriEvalDataFormat = Json.format[VeriEvalData]
+  implicit val taskEvalDataFormat = Json.format[TaskEvalData]
+
+  //Spieler, Spielzeit, Gruppe, Verification(None), Verification(True), Verification(False)
+  def userEvalData = Action.async {
+    val evalData = evalDataRepo.findAll
+    val verifications = verificationRepo.findAll
+    val data = for {
+      evalData <- evalData
+      verifications <- verifications
+      veris = veriPerUser(verifications)
+    } yield {
+      for {
+        playtime <- playTime(evalData)
+        veri = veris.get(playtime.user)
+      } yield {
+        playtime.copy(
+          numVeriTrue = veri.map(_.getOrElse(Some(true), 0)),
+          numVeriFalse = veri.map(_.getOrElse(Some(false), 0)),
+          numVeriUnsure = veri.map(_.getOrElse(None, 0))
+        )
+      }
+    }
+    data.map(d => Ok(Json.toJson(d)))
   }
 
-  def verifications = Action.async {
-    verificationRepo.findAll.map(t => Ok(Json.toJson(t)))
+  def playTime(evalDatas: Traversable[EvalData]): Traversable[UserEvalData] = {
+    evalDatas.map(
+      evalData => UserEvalData(
+        evalData.user_id, evalData.group, evalData.timePlayed, None, None, None)
+    )
   }
 
-//  def calcTimePlayed(evalData: EvalData, window: Long): Long = {
-//    evalData.timeStamps.sliding(2) map { slide =>
-//      if (interval > window) interval else 0L
-//    }
-//  }.sum
+  def veriPerUser(verifications: Traversable[Verification]) = {
+    val vPU = verifications.groupBy(_.verifier_id)
+    vPU.mapValues(_.groupBy(_.value).mapValues(_.size))
+  }
+
+  //VeriID, Verification(value), Task, Gruppe, Verification(gold)
+  def veriEvalData = Action.async {
+    val evalDatas = evalDataRepo.findAll
+    val verifications = verificationRepo.findAll
+    val data = for {
+      evalDatas <- evalDatas
+      verifications <- verifications
+    } yield {
+      for {
+        verifcation <- verifications
+        evalData = evalDatas.find(_.user_id == verifcation.verifier_id).get
+      } yield VeriEvalData(
+        veri = verifcation._id,
+        value = verifcation.value,
+        task = verifcation.task_id,
+        group = evalData.group,
+        gold = true)
+    }
+    data.map(d => Ok(Json.toJson(d)))
+  }
+
+  def veriPerTask(verifications: Traversable[Verification]) = {
+    val vPU = verifications.groupBy(_.task_id)
+    vPU.mapValues(_.groupBy(_.value).mapValues(_.size))
+  }
+  // Task, Agreement, Gruppe, Verification(Gold)
+  def taskEvalData(group: Int, confidence: Option[Double]) = Action.async {
+    val verifications = verificationRepo.findAll
+    val evalDatas = evalDataRepo.findAll
+    val data = for {
+      evalDatas <- evalDatas
+      verifications <- verifications.map(_.filter(veri => evalDatas.find(_.user_id == veri.verifier_id).get.group == group))
+      tasks = veriPerTask(verifications)
+    } yield {
+      for {
+        task <- tasks
+        stats = SimpleValidatorStats(
+          task_id = task._1,
+          numTrue = task._2.getOrElse(Some(true), 0),
+          numFalse = task._2.getOrElse(Some(false), 0),
+          numNoValue = task._2.getOrElse(None, 0)
+        )
+      } yield TaskEvalData(
+        task = task._1,
+        agreement = validator.wilsonEstimation(stats, confidence),
+        group = group,
+        gold = true)
+    }
+
+    data.map(d => Ok(Json.toJson(d)))
+  }
 }
