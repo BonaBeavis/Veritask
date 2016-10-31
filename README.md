@@ -1,4 +1,6 @@
-= Development =
+# Installation
+
+## Development
 Install dependencies:
 * git
 * sbt
@@ -9,11 +11,7 @@ cd Veritask
 make start-dev
 ```
 
-Admin frontend is reachable under localhost:9000.
-
-= Deployment =
-
-== Staging ==
+## Staging
 Install dependencies:
 * git
 * make
@@ -25,3 +23,4 @@ git clone https://github.com/BonarBeavis/Veritask.git
 cd Veritask
 make start-staging
 ```
+Admin frontend is reachable under localhost:9000.
