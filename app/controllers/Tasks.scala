@@ -220,11 +220,8 @@ class Tasks @Inject() (
       objectAttributes = objAttributes
     )
     updatedTask map {
-      case t:Task if t.objectAttributes.nonEmpty && t.subjectAttributes.nonEmpty
-        => Some(t)
-      case _ =>
-        taskRepo.delete(task._id)
-        None
+      case t:Task if t.objectAttributes.nonEmpty && t.subjectAttributes.nonEmpty => Some(t)
+      case _ => None
     }
   }
 
