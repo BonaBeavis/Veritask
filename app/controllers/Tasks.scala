@@ -180,10 +180,7 @@ class Tasks @Inject() (
     */
   def getTask( user: User, taskset: Option[String] ): Future[Option[Task]] = {
     taskRepo.selectTaskToVerify(taskset, user.validations.map(_.task_id)) flatMap {
-      case Some(task) => updateTaskAttributes(task) flatMap {
-        case Some(updatedTask) => Future.successful(Some(updatedTask))
-        case None => Future.successful(None)
-      }
+      case Some(task) => updateTaskAttributes(task)
       case None => Future.successful(None)
     }
   }
@@ -219,9 +216,10 @@ class Tasks @Inject() (
       subjectAttributes = subAttributes,
       objectAttributes = objAttributes
     )
-    updatedTask map {
-      case t:Task if t.objectAttributes.nonEmpty && t.subjectAttributes.nonEmpty => Some(t)
-      case _ => None
+    updatedTask flatMap {
+      case t:Task if t.objectAttributes.nonEmpty && t.subjectAttributes.nonEmpty
+        => taskRepo.save(t) map(Some(_))
+      case _ => Future.successful(None)
     }
   }
 
