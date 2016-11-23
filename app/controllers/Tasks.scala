@@ -132,7 +132,7 @@ class Tasks @Inject() (
           )
         case "timedTasks" =>
           evalDataRepo.save(
-            EvalData( UUID.randomUUID(), user._id, 1, 20, List(System.currentTimeMillis()))
+            EvalData( UUID.randomUUID(), user._id, 1, 10, List(System.currentTimeMillis()))
           )
         case "abilityTasks" =>
           evalDataRepo.save(
@@ -182,7 +182,7 @@ class Tasks @Inject() (
     taskRepo.selectTaskToVerify(taskset, user.validations.map(_.task_id)) flatMap {
       case Some(task) => updateTaskAttributes(task) flatMap {
         case Some(updatedTask) => Future.successful(Some(updatedTask))
-        case None => getTask(user, taskset)
+        case None => Future.successful(None)
       }
       case None => Future.successful(None)
     }
