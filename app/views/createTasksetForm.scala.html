@@ -10,7 +10,7 @@
         @b3.url(tasksetForm("objectEndpoint"), '_label -> "Object Endpoint")
         @b3.textarea(tasksetForm("subjectAttributesQuery"),
             '_label -> "Subject Attributes Query",
-            'rows -> 7,
+            'rows -> 11,
             'placeholder ->
                     "PREFIX ont: <http://dbpedia.org/ontology/>\nSELECT ?thumbnail WHERE {\n {{ linkSubjectURI }} ont:thumbnail ?attribute\n } LIMIT 1")
         @b3.textarea(tasksetForm("objectAttributesQuery"),
@@ -18,26 +18,23 @@
             'rows -> 7,
             'placeholder ->
                     "PREFIX ont: <http://dbpedia.org/ontology/>\nSELECT ?thumbnail WHERE {\n {{ linkObjectURI }} ont:thumbnail ?attribute\n } LIMIT 1")
-        )
         @b3.textarea(tasksetForm("template"),
             '_label -> "JsRender Template",
-            'rows -> 14,
+            'rows -> 20,
             'placeholder -> "<table> <tbody> <tr> <td> <label>Name:</label> {{:task.subjectAttributes.thumbnail}} <img src='{{:task.subjectAttributes.thumbnail}}' alt='some_text'></td> <td>test</td> </tr> </tbody> </table>")
         @b3.submit('class -> "btn btn-default") { Submit }
     }
     @if(tasksetForm("_id").value.isDefined) {
         @helper.form(routes.Tasksets.uploadLinksetFile(tasksetForm("_id").value.get), 'enctype -> "multipart/form-data") {
             <input type="file" name="linkset">
-
-            <p>
-                <input type="submit">
-            </p>
+            <input type="submit" value="Submit linkfile" >
         }
+        <p>
+        <div id="veritask"></div>
         <script src="@routes.Application.widget()" type="text/javascript"></script>
-        <div id="veritask" style="height: 600px; width: 600px;"></div>
-        <button onclick="veritask.challengeUser('testUser', '@tasksetForm("_id").value.get')">Test Task</button>
+        <button onclick="veritask.challengeUser('abilityTasks', '', function(){}, function(){}, true)">Test Taskset</button>
 
     } else {
-        <h1>ID NOT notdefinded</h1>
+        <h1>Taskset not yet created</h1>
     }
 }
