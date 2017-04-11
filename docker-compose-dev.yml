@@ -4,6 +4,8 @@ services:
 
   mongo:
     image: mongo
+    volumes:
+      - ./../database:/data/db
     network_mode: "host"
 
   fuseki:

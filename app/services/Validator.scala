@@ -69,18 +69,21 @@ class SimpleValidator @Inject()(
 
   def wilsonEstimation(stats: SimpleValidatorStats, confidence: Option[Double] = None): Option[Boolean] = {
     val confi = confidence.getOrElse(configuration.getDouble("veritask.confidence").get)
-    val wilsonScoreInterval = new WilsonScoreInterval
-    val interval = wilsonScoreInterval.createInterval(
-      stats.numTrue + stats.numFalse, stats.numTrue, confi)
-
-    if (interval.getLowerBound > 0.5) {
-      Some(true)
-    }
-    else if (interval.getUpperBound < 0.5) {
-      Some(false)
-    }
-    else {
+    if (stats.numTrue + stats.numFalse == 0) {
       None
-    }
-  }
+    } else {
+      val wilsonScoreInterval = new WilsonScoreInterval
+      val interval = wilsonScoreInterval.createInterval(
+        stats.numTrue + stats.numFalse, stats.numTrue, confi)
+
+      if (interval.getLowerBound > 0.5) {
+        Some(true)
+      }
+      else if (interval.getUpperBound < 0.5) {
+        Some(false)
+      }
+      else {
+        None
+      }
+  } }
 }

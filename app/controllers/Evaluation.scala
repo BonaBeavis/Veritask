@@ -15,6 +15,7 @@ import scala.concurrent.Future
 case class UserEvalData(
                          user: UUID,
                          group: Int,
+                         taskDelay: Long,
                          timePlayed: Long,
                          numVeriTrue: Option[Int],
                          numVeriFalse: Option[Int],
@@ -32,9 +33,10 @@ case class VeriEvalData(
 // Task, Agreement, Gruppe, Verification(Gold)
 case class TaskEvalData(
                          task: UUID,
+                         taskset: UUID,
                          agreement: Option[Boolean],
                          group: Int,
-                         gold: Boolean
+                         correct: Option[Boolean]
                        )
 /** Provides helper function for the evaluation.
   */
@@ -42,6 +44,8 @@ class Evaluation @Inject()(
                             val evalDataRepo: EvalDataRepo,
                             val verificationRepo: VerificationMongoRepo,
                             val valiStatsRepo: SimpleValidatorStatsMongoRepo,
+                            val tasksetRepo: TasksetMongoRepo,
+                            val taskRepo: TaskMongoRepo,
                             val validator: SimpleValidator,
                             val messagesApi: MessagesApi
                           )
@@ -78,7 +82,7 @@ class Evaluation @Inject()(
   def playTime(evalDatas: Traversable[EvalData]): Traversable[UserEvalData] = {
     evalDatas.map(
       evalData => UserEvalData(
-        evalData.user_id, evalData.group, evalData.timePlayed, None, None, None)
+        evalData.user_id, evalData.group, evalData.taskDelay, evalData.timePlayed, None, None, None)
     )
   }
 
@@ -116,13 +120,18 @@ class Evaluation @Inject()(
   def taskEvalData(group: Int, confidence: Option[Double]) = Action.async {
     val verifications = verificationRepo.findAll
     val evalDatas = evalDataRepo.findAll
+    val taskModels = taskRepo.findAll
+    val tasksets = tasksetRepo.findAll
     val data = for {
       evalDatas <- evalDatas
+      taskModels <- taskModels
+      tasksets <- tasksets
       verifications <- verifications.map(_.filter(veri => evalDatas.find(_.user_id == veri.verifier_id).get.group == group))
       tasks = veriPerTask(verifications)
     } yield {
       for {
         task <- tasks
+        taskset = tasksets.find(t => t._id == taskModels.find(x => x._id == task._1).get.taskset_id)
         stats = SimpleValidatorStats(
           task_id = task._1,
           numTrue = task._2.getOrElse(Some(true), 0),
@@ -131,11 +140,23 @@ class Evaluation @Inject()(
         )
       } yield TaskEvalData(
         task = task._1,
+        taskset = taskset.get._id,
         agreement = validator.wilsonEstimation(stats, confidence),
         group = group,
-        gold = true)
+        correct = isCorrect(validator.wilsonEstimation(stats, confidence), taskset.get))
     }
 
     data.map(d => Ok(Json.toJson(d)))
+  }
+
+ def isCorrect(agreement: Option[Boolean], taskset: Taskset): Option[Boolean] = {
+   val result = (agreement, taskset) match {
+     case (Some(agreement), taskset: Taskset) if agreement != (taskset.name == "True") =>
+       Option(false)
+     case (Some(agreement), taskset: Taskset) if agreement == (taskset.name == "True") =>
+       Option(true)
+     case (None, taskset) => None
+   }
+   result
   }
 }
