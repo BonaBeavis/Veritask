@@ -6,7 +6,7 @@ Install dependencies:
 * sbt
 
 ```bash
-git clone https://github.com/BonarBeavis/Veritask.git
+git clone https://github.com/BonaBeavis/Veritask.git
 cd Veritask
 make start-dev
 ```
@@ -19,7 +19,7 @@ Install dependencies:
 * docker-compose
 
 ```bash
-git clone https://github.com/BonarBeavis/Veritask.git
+git clone https://github.com/BonaBeavis/Veritask.git
 cd Veritask
 make start-staging
 ```
